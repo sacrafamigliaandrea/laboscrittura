@@ -130,15 +130,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .split-pane .ref-text{font-size:.84rem;line-height:1.7;padding:13px;background:var(--green-light);border-radius:8px;max-height:370px;overflow-y:auto;user-select:none;-webkit-user-select:none;}
 /* WRITE AREA — contenteditable */
 #write-area{
-  width:100%;min-height:260px;border:1px solid var(--border);border-radius:8px;
-  padding:13px 13px 13px 50px;font-family:'Patrick Hand',cursive;font-size:1.1rem;line-height:2.1;
+  width:100%;min-height:520px;border:1px solid var(--border);border-radius:8px;
+  padding:16px 20px 16px 54px;font-family:'Patrick Hand',cursive;font-size:1.2rem;line-height:2.2;
   outline:none;white-space:pre-wrap;word-wrap:break-word;
   background:
-    linear-gradient(to right, transparent 44px, #e8a0a0 44px, #e8a0a0 45px, transparent 45px),
-    repeating-linear-gradient(transparent, transparent calc(2.1em - 1px), #c8d8e8 calc(2.1em - 1px), #c8d8e8 2.1em);
+    linear-gradient(to right, transparent 46px, #e8a0a0 46px, #e8a0a0 47px, transparent 47px),
+    repeating-linear-gradient(transparent, transparent calc(2.2em - 1px), #c8d8e8 calc(2.2em - 1px), #c8d8e8 2.2em);
   background-color:#fdfcf7;
   background-attachment:local;
+  -webkit-text-decoration-skip-ink:none;
 }
+/* Hide red/blue spellcheck underlines — suggestions remain via context menu */
+#write-area *,
+#write-area{
+  text-decoration:none !important;
+  -webkit-text-decorations-in-effect:none !important;
+}
+::spelling-error{text-decoration:none !important;}
+::grammar-error{text-decoration:none !important;}
 #write-area:focus{border-color:var(--green);}
 #write-area:empty::before{content:attr(data-placeholder);color:var(--text-light);pointer-events:none;}
 /* Fading sentence */
@@ -162,6 +171,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .check-level.sel-1{background:#fef9e7;border-color:var(--amber);color:#8B6914;}
 .check-level.sel-2{background:var(--green-light);border-color:var(--green);color:var(--green);}
 .check-level.sel-3{background:var(--green);border-color:var(--green-dark);color:#fff;}
+/* Traccia choice cards */
+.traccia-opt{
+  padding:12px 16px;background:var(--amber-bg);border:2px solid #e8dbb8;border-radius:8px;
+  cursor:pointer;transition:all .2s;font-size:.88rem;line-height:1.5;color:var(--text);
+}
+.traccia-opt:hover{border-color:var(--amber);background:#fdf2d0;}
+.traccia-opt.chosen{border-color:var(--green);background:var(--green-light);cursor:default;}
+.traccia-opt .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--amber);color:#fff;font-size:.68rem;font-weight:700;margin-right:6px;}
+.traccia-opt.chosen .num{background:var(--green);}
 /* Screens */
 .screen{display:none;}.screen.active{display:block;}
 /* Responsive */
@@ -298,17 +316,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div id="screen-scrivi" class="screen">
   <div class="app-header"><h1>Bottega</h1></div>
   <div class="phase-bar" id="phasebar3"></div>
-  <div class="container">
-    <div class="card">
+  <div class="container" style="max-width:780px">
+    <div class="card" style="padding:20px">
       <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Scrivi il tuo testo</h2>
-      <p style="color:var(--text-mid);font-size:.82rem;margin-bottom:12px">Segui la struttura del modello. Cura ortografia, punteggiatura e lessico. Attenzione: se il rumore supera la soglia, l'ultima frase del tuo testo svanir&agrave;.</p>
-      <div class="split-view">
-        <div class="split-pane"><h3>Modello di riferimento</h3><div class="ref-text" id="write-ref"></div></div>
-        <div class="split-pane">
-          <h3>Il tuo testo</h3>
-          <div id="write-area" contenteditable="true" data-placeholder="Inizia a scrivere..."></div>
-        </div>
+      <div id="traccia-box" style="margin-bottom:14px;">
+        <div style="font-size:.72rem;font-weight:700;color:#8B6914;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Scegli la tua traccia</div>
+        <div id="traccia-options" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
+      <p style="color:var(--text-mid);font-size:.82rem;margin-bottom:12px">Scrivi seguendo la struttura che hai analizzato. Cura l'ortografia, la punteggiatura e la scelta delle parole. La chiarezza &egrave; rispetto per chi legge.</p>
+      <div id="write-area" contenteditable="true" spellcheck="true" data-placeholder="Inizia a scrivere il tuo testo..."></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goPhase('analizza')">Torna all'analisi</button>
@@ -343,6 +359,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 // ===================== LIBRARY =====================
 const LIBRARY={
 narrativo:{label:"Narrativo",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>',
+tracce:[
+"La migliore lezione che ho mai fatto: racconta cosa \u00e8 successo, perch\u00e9 ti ha colpito e cosa hai imparato.",
+"L\u2019esperimento di scienze che mi ha sorpreso di pi\u00f9: descrivi cosa \u00e8 successo e come ti sei sentito.",
+"Il giorno in cui un compagno mi ha aiutato quando non me lo aspettavo.",
+"La gita scolastica che ricordo meglio: racconta il momento pi\u00f9 bello e quello pi\u00f9 buffo.",
+"La volta in cui ho avuto il coraggio di alzare la mano e dire la mia opinione davanti a tutta la classe.",
+"Il primo giorno in una scuola nuova: le paure, le scoperte, i primi incontri.",
+"Racconta di quando un lavoro di gruppo \u00e8 andato malissimo... e di come alla fine ne siete usciti.",
+"La ricreazione pi\u00f9 memorabile: cosa \u00e8 successo di cos\u00ec speciale?",
+"Il momento in cui ho capito qualcosa che prima non riuscivo a capire: racconta il prima e il dopo.",
+"La volta in cui un insegnante mi ha detto una frase che mi \u00e8 rimasta in testa."
+],
 focusQuestions:[{label:"Punteggiatura",q:"Quali segni di punteggiatura usa l'autore oltre al punto? Che effetto producono?"},{label:"Lessico",q:"Trova 2-3 parole precise e non generiche. Perch\u00e9 quelle e non altre?"},{label:"Connettivi",q:"Individua i connettivi temporali e logici. Come guidano il lettore?"},{label:"Registro",q:"Il linguaggio \u00e8 formale, colloquiale o misto? Un esempio."}],
 checklist:[{group:"Struttura e coerenza",items:["Inizio, sviluppo e conclusione riconoscibili","Sequenza logica dei fatti","Punto di vista narrativo coerente"]},{group:"Lingua e lessico",items:["Parole precise, non generiche","Almeno 2-3 parole nuove o non banali","Connettivi temporali presenti e funzionali"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta (accenti, apostrofi, doppie, h)","Punteggiatura varia e consapevole","Maiuscole corrette"]},{group:"Efficacia comunicativa",items:["Il testo si fa leggere con piacere","Dettagli sensoriali presenti","Conclusione efficace"]}],
 models:[
@@ -354,6 +382,18 @@ models:[
 {id:"narr_s3",level:"secondaria",title:"Cinque minuti",text:"Il professor Mancini aveva una regola: se arrivavi in ritardo di pi\u00f9 di cinque minuti, non entravi. Non c\u2019era appello, non c\u2019era scusa.\n\nQuel luned\u00ec mi sono svegliato alle 7:42. La sveglia non era suonata, o forse l\u2019avevo spenta nel sonno. Ho fatto le scale di corsa, con la maglia al contrario e lo zaino aperto.\n\nAlla fermata del bus, il display segnava tre minuti. Ho contato ogni secondo. Il bus \u00e8 arrivato con due minuti di ritardo. Ho corso dal cancello all\u2019aula.\n\nSono entrato ansimando. Mancini ha guardato l\u2019orologio sopra la lavagna, poi me. Ho sentito il cuore nelle orecchie.\n\n\u201cQuattro minuti e cinquanta secondi,\u201d ha detto. Poi ha indicato il mio posto con il mento.\n\nMi sono seduto. Solo allora ho notato che avevo due scarpe diverse.",questions:["Come crea tensione? Almeno tre tecniche.","Che ruolo ha il tempo nella struttura?","Il finale \u00e8 comico: come funziona il contrasto?","La frase del professore: che effetto ha il discorso diretto?","Che tipo di narratore \u00e8? Vantaggi?"]}
 ]},
 descrittivo:{label:"Descrittivo",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+tracce:[
+"L\u2019aula con pi\u00f9 oggetti affascinanti: descrivi un\u2019aula della tua scuola come se la vedessi per la prima volta.",
+"Il laboratorio di scienze: descrivi gli strumenti, gli odori, l\u2019atmosfera di quel luogo.",
+"Il cortile della scuola durante la ricreazione: suoni, movimenti, colori, voci.",
+"Il corridoio della scuola quando suona la campanella: cosa succede in quei due minuti?",
+"La palestra prima di una gara: descrivi l\u2019ambiente, le sensazioni, i preparativi.",
+"Il banco del tuo compagno di classe: cosa c\u2019\u00e8 sopra, come \u00e8 organizzato, cosa racconta di lui?",
+"La mensa scolastica all\u2019ora di pranzo: odori, rumori, file, volti.",
+"La biblioteca della scuola (o quella del tuo paese): descrivi lo spazio, la luce, il silenzio.",
+"L\u2019insegnante che ti \u00e8 rimasto pi\u00f9 impresso: descrivi il suo modo di parlare, i suoi gesti, le sue abitudini.",
+"La tua scuola vista da fuori, in un giorno di pioggia: l\u2019edificio, il cancello, chi entra e chi esce."
+],
 focusQuestions:[{label:"Aggettivi",q:"Trova 3 aggettivi. Sono precisi o generici? Prova a sostituirli."},{label:"Sensi",q:"Quali sensi usa l'autore? Un esempio per ciascuno."},{label:"Figure retoriche",q:"Similitudini o metafore? Riscrivile con parole tue."},{label:"Punteggiatura",q:"Due punti, punto e virgola, puntini? Dove e con quale effetto?"}],
 checklist:[{group:"Struttura e ordine",items:["Ordine logico (spaziale, temporale, generale\u2192particolare)","Paragrafi con un 'fuoco' ciascuno","Il lettore si orienta nella scena"]},{group:"Lingua e lessico",items:["Aggettivi precisi","Almeno 3 riferimenti sensoriali","Similitudini/metafore efficaci"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta","Punteggiatura varia e consapevole","Maiuscole corrette"]},{group:"Efficacia comunicativa",items:["Il lettore 'vede' la scena","Tono coerente col modello","Atmosfera, non elenco"]}],
 models:[
@@ -364,6 +404,18 @@ models:[
 {id:"desc_s2",level:"secondaria",title:"La biblioteca comunale",text:"La biblioteca comunale \u00e8 al secondo piano di un palazzo ottocentesco con le pareti scrostate e un portone che cigola. La scala di marmo ha i gradini consumati al centro, dove migliaia di piedi li hanno levigati.\n\nAll\u2019ingresso l\u2019odore cambia. L\u2019aria diventa secca, un misto di carta vecchia, legno e qualcosa di dolciastro, come vaniglia. \u00c8 l\u2019odore dei libri che invecchiano, dicono.\n\nLa sala principale ha il soffitto alto, con una finestra ovale che proietta un cerchio di luce sul pavimento. Gli scaffali di legno scuro arrivano fin quasi al soffitto. Per raggiungere i ripiani pi\u00f9 alti c\u2019\u00e8 una scala a pioli che scorre su un binario di ottone.\n\nIl silenzio non \u00e8 mai totale: c\u2019\u00e8 sempre il fruscio di una pagina, il ticchettio di una tastiera, il rumore soffocato di una sedia che viene spostata. Ma \u00e8 un silenzio pieno, non vuoto.",questions:["Percorso fisico della descrizione?","Come scompone l'odore?","'Silenzio pieno': come rende concreta un'astrazione?","Dettagli di antichit\u00e0 e uso?","Tono complessivo: giustifica."]}
 ]},
 argomentativo:{label:"Argomentativo",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+tracce:[
+"La ricreazione dovrebbe durare di pi\u00f9? Esponi la tua opinione con almeno due argomenti.",
+"\u00c8 giusto dare voti ai compiti a casa? Argomenta la tua posizione considerando anche chi la pensa diversamente.",
+"Lo sport a scuola \u00e8 importante quanto la matematica? Prendi una posizione e difendila.",
+"I lavori di gruppo funzionano davvero o \u00e8 meglio lavorare da soli? Sostieni la tua tesi.",
+"Gli studenti dovrebbero poter scegliere alcune materie da studiare? Perch\u00e9 s\u00ec o perch\u00e9 no?",
+"Le verifiche a sorpresa sono utili o dannose per l\u2019apprendimento? Argomenta.",
+"La scuola dovrebbe insegnare a cucinare, a gestire i soldi e altre abilit\u00e0 pratiche? Motiva la tua risposta.",
+"\u00c8 pi\u00f9 utile studiare sui libri o imparare facendo? Esprimi e difendi la tua opinione.",
+"I compiti per le vacanze: servono davvero o rovinano il riposo? Porta argomenti concreti.",
+"Secondo te, la scuola prepara davvero alla vita? Scrivi cosa funziona e cosa cambieresti."
+],
 focusQuestions:[{label:"Connettivi logici",q:"Individua i connettivi (perch\u00e9, infatti, tuttavia, quindi...). Funzione di ciascuno?"},{label:"Registro",q:"Formale o informale? 2 scelte che lo dimostrano."},{label:"Lessico argomentativo",q:"Parole 'forti' (innegabile, fondamentale...)? Quali?"},{label:"Punteggiatura retorica",q:"Due punti, punto e virgola, trattini per organizzare il ragionamento? Dove?"}],
 checklist:[{group:"Struttura argomentativa",items:["Tesi chiaramente espressa","Almeno due argomenti a sostegno","Obiezione o punto di vista contrario","Conclusione che riprende la tesi"]},{group:"Lingua e lessico",items:["Connettivi logici corretti e vari","Lessico appropriato","Registro coerente"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta","Punteggiatura che organizza il ragionamento","Maiuscole corrette"]},{group:"Efficacia comunicativa",items:["Il testo convince o fa riflettere","Ragionamento chiaro","La posizione dell'autore \u00e8 comprensibile"]}],
 models:[
@@ -374,6 +426,18 @@ models:[
 {id:"arg_s3",level:"secondaria",title:"Social network e amicizia",text:"Si dice spesso che i social network rovinano le amicizie. Io credo che questa affermazione sia troppo semplice, e che la realt\u00e0 sia pi\u00f9 sfumata.\n\n\u00c8 vero che i social possono creare relazioni superficiali. Avere trecento \u201camici\u201d online non significa avere trecento amici veri. Il rischio di confondere popolarit\u00e0 con amicizia esiste.\n\nTuttavia, i social permettono di mantenere relazioni che altrimenti si perderebbero. Un compagno che cambia scuola, un cugino lontano: senza i social, molti legami si spezzerebbero.\n\nInoltre, per chi \u00e8 timido, lo spazio digitale pu\u00f2 essere un primo passo per aprirsi.\n\nIl problema non \u00e8 lo strumento, ma come lo si usa.\n\nLa domanda giusta non \u00e8 \u201ci social rovinano le amicizie?\u201d ma \u201cio come uso i social nelle mie amicizie?\u201d",questions:["Tesi sfumata: perch\u00e9?","Argomentazioni pro e contro: quante?","L'ultima frase ribalta la domanda: effetto?","Connettivi avversativi e funzione.","Prima persona: efficace per argomentare?"]}
 ]},
 lettera:{label:"Lettera",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+tracce:[
+"Scrivi una lettera a un compagno assente da molti giorni per raccontargli cosa \u00e8 successo in classe.",
+"Scrivi una lettera al dirigente scolastico per proporre un\u2019attivit\u00e0 o un miglioramento per la scuola.",
+"Scrivi una lettera a un insegnante per ringraziarlo di qualcosa che ti ha insegnato.",
+"Scrivi una lettera a un compagno delle elementari che non vedi pi\u00f9 per raccontargli la tua nuova scuola.",
+"Scrivi una lettera a un alunno che l\u2019anno prossimo arriver\u00e0 nella tua scuola: dagli consigli e rassicuralo.",
+"Scrivi una lettera al sindaco per chiedere un attraversamento pedonale pi\u00f9 sicuro vicino alla scuola.",
+"Scrivi una lettera a te stesso da leggere fra cinque anni: racconta com\u2019\u00e8 la tua vita scolastica adesso.",
+"Scrivi una lettera a un autore che hai studiato in classe per dirgli cosa ti ha colpito del suo libro.",
+"Scrivi una lettera al giornalino della scuola per segnalare un\u2019iniziativa che meriterebbe pi\u00f9 attenzione.",
+"Scrivi una lettera a un personaggio storico studiato quest\u2019anno per fargli una domanda e dirgli la tua opinione."
+],
 focusQuestions:[{label:"Formule",q:"Formule di apertura e chiusura: adeguate al destinatario?"},{label:"Tu o Lei?",q:"Tu o Lei? Coerente per tutto il testo?"},{label:"Lessico epistolare",q:"Espressioni tipiche (caro, distinti saluti, le scrivo per...)?"},{label:"Punteggiatura",q:"Due punti, virgole, esclamativi: che tono creano?"}],
 checklist:[{group:"Struttura epistolare",items:["Elementi formali completi (data, destinatario, apertura, chiusura, firma)","Scopo chiaro dal primo paragrafo","Paragrafi logici"]},{group:"Lingua e registro",items:["Registro adeguato (tu/Lei)","Lessico appropriato alla situazione","Formule coerenti col tono"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta","Punteggiatura curata","Maiuscole corrette (anche Lei di cortesia)"]},{group:"Efficacia comunicativa",items:["Il destinatario capirebbe lo scopo","Tono rispettoso e appropriato","Rapporto col destinatario mantenuto"]}],
 models:[
@@ -384,6 +448,18 @@ models:[
 {id:"let_s3",level:"secondaria",title:"Lettera di reclamo",text:"Brescia, 5 novembre 2026\n\nSpett.le Direzione del Ristorante \u201cLa Quercia\u201d,\n\nvi scrivo in merito alla cena del 2 novembre scorso, durante la quale si sono verificati alcuni disagi.\n\nIl nostro tavolo, prenotato per le 20:00, \u00e8 stato assegnato solo alle 20:35, senza spiegazione. Una volta seduti, l\u2019attesa per le ordinazioni \u00e8 stata di ulteriori venti minuti.\n\nIl piatto principale (tagliata di manzo con rucola) \u00e8 arrivato freddo. Ho segnalato il problema al cameriere, che si \u00e8 scusato ma non ha proposto soluzione.\n\nIl conto, nonostante i disservizi, era completo e senza sconto.\n\nNon scrivo per polemica, ma perch\u00e9 in passato ho apprezzato il vostro locale e mi dispiacerebbe non tornarci. Confido in un riscontro.\n\nCordiali saluti,\nMarco Bianchi",questions:["Struttura: paragrafi e funzione di ciascuno?","Fermo ma non aggressivo: scelte?","Date, orari, piatti: perch\u00e9?","Il penultimo paragrafo cambia: come?","Confronta con lettera al sindaco: cosa in comune?"]}
 ]},
 cronaca:{label:"Cronaca",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2z"/></svg>',
+tracce:[
+"Scrivi un articolo sulla partita pi\u00f9 bella giocata dalla tua classe durante l\u2019ora di educazione fisica.",
+"Scrivi un articolo sulla gita scolastica pi\u00f9 recente: cosa \u00e8 successo, chi c\u2019era, cosa avete visto.",
+"Scrivi un articolo su uno spettacolo, una recita o un concerto organizzato dalla tua scuola.",
+"Scrivi un articolo sull\u2019arrivo di un nuovo compagno in classe: come \u00e8 stato accolto, cosa \u00e8 cambiato.",
+"Scrivi un articolo su un laboratorio o un progetto speciale che avete fatto in classe.",
+"Scrivi un articolo sulla giornata della scienza (o di un\u2019altra materia) organizzata nella tua scuola.",
+"Scrivi un articolo su un problema che si \u00e8 verificato a scuola (un guasto, un imprevisto) e come \u00e8 stato risolto.",
+"Scrivi un articolo sulla premiazione di un concorso a cui la tua classe ha partecipato.",
+"Scrivi un articolo sull\u2019inaugurazione di un nuovo spazio nella tua scuola (biblioteca, aula, laboratorio).",
+"Scrivi un articolo sull\u2019ultimo giorno di scuola: cosa \u00e8 successo, chi ha pianto, chi ha riso, chi ha promesso di restare in contatto."
+],
 focusQuestions:[{label:"Le 5W",q:"Nel primo paragrafo: Chi? Che cosa? Quando? Dove? Perch\u00e9?"},{label:"Fatto vs opinione",q:"Una frase oggettiva e una con opinione: come le distingui?"},{label:"Citazioni",q:"Chi viene citato? Perch\u00e9 proprio quella persona?"},{label:"Lessico giornalistico",q:"2-3 espressioni tipiche (si \u00e8 svolta, ha dichiarato...). Si usano nel parlato?"}],
 checklist:[{group:"Struttura giornalistica",items:["Titolo informativo","Lead con le 5W","Fatti in ordine logico/cronologico","Chiusura prospettica"]},{group:"Lingua e registro",items:["Registro oggettivo","Fonti citate correttamente","Lessico preciso e giornalistico"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta","Virgolette per citazioni, due punti per elenchi","Maiuscole per nomi propri e istituzioni"]},{group:"Efficacia comunicativa",items:["Il lettore capisce subito il tema","Informazioni complete ma non ridondanti","Articolo credibile"]}],
 models:[
@@ -399,7 +475,7 @@ models:[
 const S={type:null,level:null,model:null,phase:'select',startTime:null,obsInterval:null,sessionInterval:null,
   obsMinTime:0,obsElapsed:0,answers:{},focusAnswers:{},checkValues:{},
   violations:[],violationCount:0,clickTimestamps:[],
-  noiseHistory:[],avgNoise:0,sentencesLost:0,
+  noiseHistory:[],avgNoise:0,sentencesLost:0,currentTraccia:'',
   noiseFadeState:0,noiseFadeTimer:null,noiseHighStart:null,
   PIN:'1234'};
 
@@ -461,7 +537,31 @@ function setupAnalizza(){
   const fg=document.getElementById('focus-grid');fg.innerHTML='';
   LIBRARY[S.type].focusQuestions.forEach((fq,i)=>{const d=document.createElement('div');d.className='focus-item';d.innerHTML=`<label>${fq.label}</label><textarea placeholder="${fq.q}">${S.focusAnswers[i]||''}</textarea>`;d.querySelector('textarea').oninput=e=>{S.focusAnswers[i]=e.target.value;};fg.appendChild(d);});
 }
-function setupScrivi(){document.getElementById('write-ref').innerHTML=S.model.text.replace(/\n/g,'<br>');updateWordCount();}
+function setupScrivi(){
+  // Pick 3 random tracce
+  const tracce=[...LIBRARY[S.type].tracce];
+  const picked=[];
+  while(picked.length<3&&tracce.length){
+    const i=Math.floor(Math.random()*tracce.length);
+    picked.push(tracce.splice(i,1)[0]);
+  }
+  const box=document.getElementById('traccia-options');
+  box.innerHTML='';
+  picked.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.className='traccia-opt';
+    d.innerHTML=`<span class="num">${i+1}</span>${t}`;
+    d.onclick=()=>{
+      box.querySelectorAll('.traccia-opt').forEach(o=>o.classList.remove('chosen'));
+      d.classList.add('chosen');
+      S.currentTraccia=t;
+    };
+    box.appendChild(d);
+  });
+  // Pre-select none
+  S.currentTraccia='';
+  updateWordCount();
+}
 function setupConfronta(){
   document.getElementById('conf-ref').innerHTML=S.model.text.replace(/\n/g,'<br>');
   document.getElementById('conf-mine').textContent=document.getElementById('write-area').innerText||'(Nessun testo)';
@@ -647,6 +747,8 @@ function doExportPDF(){
   if(Object.keys(S.focusAnswers).length){if(y>250){doc.addPage();y=mg;}y+=3;doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text('Focus linguistico',mg,y);y+=5;LIBRARY[S.type].focusQuestions.forEach((fq,i)=>{if(y>270){doc.addPage();y=mg;}doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.text(fq.label+':',mg,y);y+=3.2;doc.setFont('helvetica','normal');const fl=doc.splitTextToSize(S.focusAnswers[i]||'(vuoto)',W-2*mg-3);doc.text(fl,mg+2,y);y+=fl.length*3.2+3;});}
   // Page 2
   doc.addPage();y=mg;doc.setFillColor(27,109,63);doc.rect(0,0,W,16,'F');doc.setTextColor(255);doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text(`Il testo di ${studentName}`,mg,11);if(studentClass)doc.text(`Classe ${studentClass}`,W-mg,11,{align:'right'});y=22;doc.setTextColor(30);
+  // Traccia
+  if(S.currentTraccia){doc.setFillColor(253,246,227);doc.setDrawColor(212,160,23);doc.setLineWidth(.6);const tl=doc.splitTextToSize('Traccia: '+S.currentTraccia,W-2*mg-8);const th=tl.length*3.8+8;doc.rect(mg,y,W-2*mg,th,'FD');doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor(80);doc.text(tl,mg+4,y+5);y+=th+5;doc.setTextColor(30);}
   const st=document.getElementById('write-area').innerText||'(vuoto)';doc.setFontSize(8.5);doc.setFont('helvetica','normal');const sl=doc.splitTextToSize(st,W-2*mg);doc.text(sl,mg,y);y+=sl.length*3.8+8;
   // Checklist
   if(y>250){doc.addPage();y=mg;}doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text('Autovalutazione',mg,y);y+=6;const lvs=['In parte','Abbastanza','Pienamente'];let ci2=0;
