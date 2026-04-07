@@ -4,279 +4,236 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bottega — Scrivi come un artigiano</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root {
-  --green: #1B6D3F;
-  --green-light: #e8f5ee;
-  --green-dark: #145230;
-  --amber: #D4A017;
-  --amber-light: #fef9e7;
-  --red: #C0392B;
-  --red-light: #fdecea;
-  --bg: #FAFAF7;
-  --card: #FFFFFF;
-  --text: #1a1a1a;
-  --text-mid: #555;
-  --text-light: #888;
-  --border: #e0e0d8;
-  --radius: 12px;
-  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+:root{
+  --green:#1B6D3F;--green-light:#e8f5ee;--green-dark:#145230;
+  --amber:#D4A017;--amber-light:#fef9e7;--amber-bg:#fdf6e3;
+  --red:#C0392B;--red-light:#fdecea;
+  --bg:#FAFAF7;--card:#FFF;--text:#1a1a1a;--text-mid:#555;--text-light:#888;
+  --border:#e0e0d8;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,.06);
+  --sidebar-w:230px;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-/* NOISE METER BAR */
-#noisebar {
-  position:fixed; top:0; left:0; width:100%; height:6px; z-index:1000;
-  background:var(--border); transition:background .3s;
-}
-#noisebar .fill { height:100%; width:0; transition:width .15s, background .3s; background:var(--green); border-radius:0 3px 3px 0; }
-#noise-warning {
-  position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000;
-  background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center;
-}
-#noise-warning .inner {
-  background:var(--card); border-radius:var(--radius); padding:48px; text-align:center; max-width:420px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.15);
-}
-#noise-warning .inner svg { width:64px; height:64px; margin-bottom:16px; }
-#noise-warning .inner h3 { font-size:1.3rem; margin-bottom:8px; }
-#noise-warning .inner p { color:var(--text-mid); }
+/* ===== SIDEBAR ===== */
+#sidebar{position:fixed;top:0;right:0;width:var(--sidebar-w);height:100vh;background:var(--card);border-left:1px solid var(--border);z-index:900;display:none;flex-direction:column;overflow-y:auto;box-shadow:-2px 0 16px rgba(0,0,0,.04);}
+#sidebar.visible{display:flex;}
+.sb-section{padding:14px;border-bottom:1px solid var(--border);}
+.sb-label{font-size:.68rem;color:var(--text-light);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+#sidebar .sb-header{padding:14px;border-bottom:1px solid var(--border);text-align:center;}
+#sidebar .sb-header h3{font-size:.78rem;color:var(--green-dark);letter-spacing:.5px;text-transform:uppercase;}
+/* Noise viz */
+#noise-viz{height:70px;background:var(--bg);border-radius:8px;position:relative;overflow:hidden;margin-bottom:6px;}
+#noise-bars{display:flex;align-items:flex-end;height:100%;gap:2px;padding:4px;}
+.noise-bar{flex:1;background:var(--green);border-radius:2px 2px 0 0;min-height:2px;transition:height .15s,background .3s;}
+#noise-level{display:flex;align-items:center;justify-content:space-between;}
+#noise-level .pct{font-size:1.05rem;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;transition:color .3s;}
+#noise-level .status{font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--green-light);color:var(--green);transition:all .3s;}
+#noise-avg{font-size:.66rem;color:var(--text-light);margin-top:3px;}
+/* Noise penalty indicator */
+#noise-penalty{display:none;margin-top:8px;padding:6px 8px;border-radius:6px;background:var(--red-light);border:1px solid var(--red);font-size:.7rem;color:var(--red);font-weight:600;text-align:center;}
+#noise-silenzio{display:none;margin-top:8px;padding:8px;border-radius:8px;background:var(--amber-light);border:1px solid var(--amber);font-size:.9rem;font-weight:700;color:#8B6914;text-align:center;letter-spacing:.5px;animation:silPulse 1s ease infinite;}
+@keyframes silPulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* Timer */
+.timer-display{font-size:1.3rem;font-weight:700;color:var(--green-dark);font-variant-numeric:tabular-nums;text-align:center;}
+.timer-sub{font-size:.68rem;color:var(--text-light);text-align:center;margin-top:2px;}
+#sb-wordcount{display:none;margin-top:8px;text-align:center;}
+#sb-wordcount .wc-num{font-size:1.2rem;font-weight:700;color:var(--green-dark);}
+#sb-wordcount .wc-label{font-size:.68rem;color:var(--text-light);}
+/* Badges */
+#badge-list{display:flex;flex-direction:column;gap:4px;}
+.badge-item{display:flex;align-items:center;gap:5px;padding:4px 7px;background:var(--amber-light);border:1px solid var(--amber);border-radius:7px;font-size:.66rem;font-weight:600;color:#8B6914;animation:badgeIn .3s ease;}
+.badge-item.severe{background:var(--red-light);border-color:var(--red);color:var(--red);}
+.badge-item svg{width:13px;height:13px;flex-shrink:0;}
+@keyframes badgeIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.empty-msg{font-size:.7rem;color:var(--text-light);font-style:italic;}
+/* Sentences lost counter */
+#sentences-lost{display:none;margin-top:8px;padding:6px;border-radius:6px;background:var(--red-light);text-align:center;font-size:.72rem;color:var(--red);font-weight:600;}
 
-/* BADGE STACK (behavioral monitoring) */
-#badge-stack {
-  position:fixed; top:16px; right:16px; z-index:900;
-  display:flex; flex-direction:column; gap:6px; align-items:flex-end;
-}
-.badge-item {
-  display:flex; align-items:center; gap:6px; padding:4px 10px 4px 6px;
-  background:var(--amber-light); border:1px solid var(--amber); border-radius:20px;
-  font-size:0.72rem; font-weight:600; color:#8B6914; animation:badgeIn .3s ease;
-}
-.badge-item.severe { background:var(--red-light); border-color:var(--red); color:var(--red); }
-.badge-item svg { width:16px; height:16px; flex-shrink:0; }
-@keyframes badgeIn { from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)} }
+/* ===== VIOLATION OVERLAY ===== */
+#violation-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:3000;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;}
+#violation-overlay .inner{background:var(--card);border-radius:var(--radius);padding:44px;text-align:center;max-width:460px;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+#violation-overlay .inner h3{color:var(--red);font-size:1.3rem;margin-bottom:10px;}
+.pin-row{margin-top:18px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.pin-row input{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:.88rem;text-align:center;width:130px;}
 
-/* VIOLATION OVERLAY */
-#violation-overlay {
-  position:fixed; top:0; left:0; width:100%; height:100%; z-index:3000;
-  background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center;
+/* ===== MAIN ===== */
+.main-wrap{margin-right:0;transition:margin-right .3s;}
+.main-wrap.sidebar-open{margin-right:var(--sidebar-w);}
+.app-header{text-align:center;padding:34px 20px 14px;}
+.app-header h1{font-family:'Playfair Display',serif;font-size:2.1rem;color:var(--green-dark);letter-spacing:-.5px;}
+.app-header .sub{color:var(--text-mid);font-size:.9rem;margin-top:3px;}
+/* Phase bar */
+.phase-bar{display:flex;justify-content:center;gap:4px;padding:10px 20px;max-width:580px;margin:0 auto;}
+.phase-dot{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:.73rem;font-weight:600;background:var(--border);color:var(--text-light);transition:all .3s;}
+.phase-dot.active{background:var(--green);color:#fff;}
+.phase-dot.done{background:var(--green-light);color:var(--green);}
+.phase-dot svg{width:12px;height:12px;}
+/* Cards */
+.container{max-width:840px;margin:0 auto;padding:0 20px 36px;}
+.card{background:var(--card);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:14px;}
+.card h2{font-size:1.05rem;color:var(--green-dark);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.card h2 svg{width:19px;height:19px;}
+/* Selection */
+.type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:9px;margin-bottom:18px;}
+.type-btn{padding:13px 9px;border:2px solid var(--border);border-radius:var(--radius);background:var(--card);cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;font-size:.8rem;font-weight:600;color:var(--text);}
+.type-btn:hover{border-color:var(--green);background:var(--green-light);}
+.type-btn.selected{border-color:var(--green);background:var(--green);color:#fff;}
+.type-btn .icon{font-size:1.2rem;margin-bottom:3px;display:block;}
+.level-btns{display:flex;gap:7px;margin-bottom:18px;}
+.level-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:var(--radius);background:var(--card);cursor:pointer;text-align:center;font-family:inherit;font-size:.8rem;font-weight:600;color:var(--text);transition:all .2s;}
+.level-btn:hover{border-color:var(--green);}
+.level-btn.selected{border-color:var(--green);background:var(--green);color:#fff;}
+.model-list{display:flex;flex-direction:column;gap:6px;}
+.model-item{padding:11px 13px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center;}
+.model-item:hover{border-color:var(--green);background:var(--green-light);}
+.model-item.selected{border-color:var(--green);background:var(--green);color:#fff;}
+.model-item .title{font-weight:600;font-size:.86rem;}
+.model-item .meta{font-size:.7rem;opacity:.7;}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border:none;border-radius:8px;font-family:inherit;font-size:.84rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--green);color:#fff;}
+.btn-primary:hover{background:var(--green-dark);}
+.btn-primary:disabled{background:var(--border);color:var(--text-light);cursor:not-allowed;}
+.btn-secondary{background:var(--green-light);color:var(--green);}
+.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border);}
+.btn-row{display:flex;gap:7px;justify-content:flex-end;margin-top:16px;}
+/* Text display */
+.model-text-display{font-size:.98rem;line-height:1.8;padding:18px;background:var(--green-light);border-left:4px solid var(--green);border-radius:0 var(--radius) var(--radius) 0;white-space:pre-wrap;}
+.model-text-display .author{display:block;margin-top:8px;font-size:.76rem;color:var(--text-mid);font-style:italic;}
+/* Timer inline */
+.timer-inline{display:flex;align-items:center;gap:9px;padding:9px 13px;background:var(--green-light);border-radius:8px;margin-bottom:14px;}
+.timer-inline svg{width:17px;height:17px;color:var(--green);}
+.timer-inline .time{font-weight:700;font-size:.95rem;color:var(--green);font-variant-numeric:tabular-nums;}
+.timer-inline .label{font-size:.76rem;color:var(--text-mid);}
+/* Questions */
+.question-block{margin-bottom:14px;}
+.question-block label{display:block;font-weight:600;font-size:.83rem;margin-bottom:4px;color:var(--green-dark);}
+.question-block label .num{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--green);color:#fff;font-size:.66rem;margin-right:4px;}
+.question-block textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px;font-family:inherit;font-size:.86rem;resize:vertical;min-height:56px;transition:border-color .2s;}
+.question-block textarea:focus{outline:none;border-color:var(--green);}
+/* Focus linguistico */
+.focus-section{margin-top:18px;padding:16px;background:var(--amber-bg);border-radius:var(--radius);border:1px solid #e8dbb8;}
+.focus-section h3{font-size:.88rem;color:#8B6914;margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.focus-section h3 svg{width:17px;height:17px;}
+.focus-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.focus-item label{display:block;font-size:.76rem;font-weight:600;color:var(--text-mid);margin-bottom:3px;}
+.focus-item textarea{width:100%;border:1px solid #ddd4b8;border-radius:6px;padding:7px;font-family:inherit;font-size:.8rem;resize:vertical;min-height:44px;background:#fffef8;}
+.focus-item textarea:focus{outline:none;border-color:var(--amber);}
+/* Split view */
+.split-view{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.split-pane{min-height:240px;}
+.split-pane h3{font-size:.76rem;color:var(--text-mid);margin-bottom:7px;text-transform:uppercase;letter-spacing:.7px;}
+.split-pane .ref-text{font-size:.84rem;line-height:1.7;padding:13px;background:var(--green-light);border-radius:8px;max-height:370px;overflow-y:auto;user-select:none;-webkit-user-select:none;}
+/* WRITE AREA — contenteditable */
+#write-area{
+  width:100%;min-height:260px;border:1px solid var(--border);border-radius:8px;
+  padding:13px 13px 13px 50px;font-family:'Patrick Hand',cursive;font-size:1.1rem;line-height:2.1;
+  outline:none;white-space:pre-wrap;word-wrap:break-word;
+  background:
+    linear-gradient(to right, transparent 44px, #e8a0a0 44px, #e8a0a0 45px, transparent 45px),
+    repeating-linear-gradient(transparent, transparent calc(2.1em - 1px), #c8d8e8 calc(2.1em - 1px), #c8d8e8 2.1em);
+  background-color:#fdfcf7;
+  background-attachment:local;
 }
-#violation-overlay .inner {
-  background:var(--card); border-radius:var(--radius); padding:48px; text-align:center; max-width:480px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+#write-area:focus{border-color:var(--green);}
+#write-area:empty::before{content:attr(data-placeholder);color:var(--text-light);pointer-events:none;}
+/* Fading sentence */
+#write-area .fading-sentence{
+  transition:opacity 3s ease, color 3s ease;
+  opacity:.3;color:var(--red);
 }
-#violation-overlay .inner h3 { color:var(--red); font-size:1.4rem; margin-bottom:12px; }
-
-/* HEADER */
-.app-header {
-  text-align:center; padding:40px 20px 20px;
+#write-area .fading-sentence.vanishing{
+  transition:opacity 1s ease;
+  opacity:0;
 }
-.app-header h1 {
-  font-family:'Playfair Display',serif; font-size:2.4rem; color:var(--green-dark);
-  letter-spacing:-0.5px;
-}
-.app-header .sub { color:var(--text-mid); font-size:0.95rem; margin-top:4px; }
-
-/* PHASE INDICATOR */
-.phase-bar {
-  display:flex; justify-content:center; gap:4px; padding:16px 20px; max-width:600px; margin:0 auto;
-}
-.phase-dot {
-  display:flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px;
-  font-size:0.78rem; font-weight:600; background:var(--border); color:var(--text-light);
-  transition:all .3s;
-}
-.phase-dot.active { background:var(--green); color:#fff; }
-.phase-dot.done { background:var(--green-light); color:var(--green); }
-.phase-dot svg { width:14px; height:14px; }
-
-/* CONTAINERS */
-.container { max-width:900px; margin:0 auto; padding:0 20px 40px; }
-.card {
-  background:var(--card); border-radius:var(--radius); padding:32px;
-  box-shadow:var(--shadow); border:1px solid var(--border); margin-bottom:20px;
-}
-.card h2 { font-size:1.2rem; color:var(--green-dark); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-.card h2 svg { width:22px; height:22px; }
-
-/* SELECTION GRID */
-.type-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
-.type-btn {
-  padding:16px 12px; border:2px solid var(--border); border-radius:var(--radius);
-  background:var(--card); cursor:pointer; text-align:center; transition:all .2s;
-  font-family:inherit; font-size:0.85rem; font-weight:600; color:var(--text);
-}
-.type-btn:hover { border-color:var(--green); background:var(--green-light); }
-.type-btn.selected { border-color:var(--green); background:var(--green); color:#fff; }
-.type-btn .icon { font-size:1.4rem; margin-bottom:6px; display:block; }
-
-.level-btns { display:flex; gap:8px; margin-bottom:24px; }
-.level-btn {
-  flex:1; padding:12px; border:2px solid var(--border); border-radius:var(--radius);
-  background:var(--card); cursor:pointer; text-align:center; font-family:inherit;
-  font-size:0.85rem; font-weight:600; color:var(--text); transition:all .2s;
-}
-.level-btn:hover { border-color:var(--green); }
-.level-btn.selected { border-color:var(--green); background:var(--green); color:#fff; }
-
-.model-list { display:flex; flex-direction:column; gap:8px; }
-.model-item {
-  padding:14px 16px; border:1px solid var(--border); border-radius:8px;
-  cursor:pointer; transition:all .2s; display:flex; justify-content:space-between; align-items:center;
-}
-.model-item:hover { border-color:var(--green); background:var(--green-light); }
-.model-item.selected { border-color:var(--green); background:var(--green); color:#fff; }
-.model-item .title { font-weight:600; font-size:0.9rem; }
-.model-item .meta { font-size:0.75rem; opacity:0.7; }
-
-/* BUTTONS */
-.btn {
-  display:inline-flex; align-items:center; gap:8px; padding:12px 24px;
-  border:none; border-radius:8px; font-family:inherit; font-size:0.9rem;
-  font-weight:600; cursor:pointer; transition:all .2s;
-}
-.btn-primary { background:var(--green); color:#fff; }
-.btn-primary:hover { background:var(--green-dark); }
-.btn-primary:disabled { background:var(--border); color:var(--text-light); cursor:not-allowed; }
-.btn-secondary { background:var(--green-light); color:var(--green); }
-.btn-secondary:hover { background:#d4eddd; }
-.btn-ghost { background:transparent; color:var(--text-mid); border:1px solid var(--border); }
-
-.btn-row { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
-
-/* TEXT DISPLAY */
-.model-text-display {
-  font-size:1.05rem; line-height:1.8; padding:24px; background:var(--green-light);
-  border-left:4px solid var(--green); border-radius:0 var(--radius) var(--radius) 0;
-  white-space:pre-wrap;
-}
-.model-text-display .author { display:block; margin-top:12px; font-size:0.8rem; color:var(--text-mid); font-style:italic; }
-
-/* TIMER */
-.timer-bar {
-  display:flex; align-items:center; gap:12px; padding:12px 16px;
-  background:var(--green-light); border-radius:8px; margin-bottom:20px;
-}
-.timer-bar svg { width:20px; height:20px; color:var(--green); }
-.timer-bar .time { font-weight:700; font-size:1.1rem; color:var(--green); font-variant-numeric:tabular-nums; }
-.timer-bar .label { font-size:0.8rem; color:var(--text-mid); }
-
-/* QUESTIONS */
-.question-block { margin-bottom:20px; }
-.question-block label { display:block; font-weight:600; font-size:0.9rem; margin-bottom:6px; color:var(--green-dark); }
-.question-block label .num { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--green); color:#fff; font-size:0.7rem; margin-right:6px; }
-.question-block textarea {
-  width:100%; border:1px solid var(--border); border-radius:8px; padding:12px;
-  font-family:inherit; font-size:0.9rem; resize:vertical; min-height:70px;
-  transition:border-color .2s;
-}
-.question-block textarea:focus { outline:none; border-color:var(--green); }
-
-/* SPLIT VIEW */
-.split-view { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-.split-pane { min-height:300px; }
-.split-pane h3 { font-size:0.85rem; color:var(--text-mid); margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; }
-.split-pane .ref-text {
-  font-size:0.88rem; line-height:1.7; padding:16px; background:var(--green-light);
-  border-radius:8px; max-height:400px; overflow-y:auto; user-select:none;
-  -webkit-user-select:none;
-}
-#write-area {
-  width:100%; min-height:300px; border:1px solid var(--border); border-radius:8px;
-  padding:16px; font-family:inherit; font-size:1rem; line-height:1.7; resize:vertical;
-}
-#write-area:focus { outline:none; border-color:var(--green); }
-.word-count { text-align:right; font-size:0.78rem; color:var(--text-light); margin-top:6px; }
-
-/* CHECKLIST */
-.check-item {
-  display:flex; align-items:flex-start; gap:12px; padding:14px 0;
-  border-bottom:1px solid var(--border);
-}
-.check-item:last-child { border-bottom:none; }
-.check-item .label-text { flex:1; font-size:0.9rem; }
-.check-levels { display:flex; gap:6px; }
-.check-level {
-  padding:4px 10px; border:1px solid var(--border); border-radius:6px;
-  font-size:0.72rem; font-weight:600; cursor:pointer; transition:all .2s;
-  background:var(--card); font-family:inherit;
-}
-.check-level:hover { border-color:var(--green); }
-.check-level.sel-1 { background:#e8f5ee; border-color:var(--green); color:var(--green); }
-.check-level.sel-2 { background:var(--green-light); border-color:var(--green); color:var(--green); font-weight:700; }
-.check-level.sel-3 { background:var(--green); border-color:var(--green-dark); color:#fff; }
-
-/* RESPONSIVE */
-@media(max-width:768px) {
-  .split-view { grid-template-columns:1fr; }
-  .app-header h1 { font-size:1.8rem; }
-  .type-grid { grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); }
-  .card { padding:20px; }
-}
-@media(max-width:480px) {
-  .phase-dot span { display:none; }
-}
-
-/* SCREEN SECTIONS */
-.screen { display:none; }
-.screen.active { display:block; }
-
-/* NOISE METER SIDEBAR (compact) */
-#noise-indicator {
-  position:fixed; bottom:20px; right:20px; z-index:800;
-  background:var(--card); border:1px solid var(--border); border-radius:12px;
-  padding:10px 14px; box-shadow:var(--shadow); display:none; align-items:center; gap:10px;
-  cursor:pointer;
-}
-#noise-indicator .dot { width:12px; height:12px; border-radius:50%; background:var(--green); transition:background .3s; }
-#noise-indicator .label { font-size:0.72rem; color:var(--text-mid); font-weight:600; }
-#noise-indicator .db { font-size:0.85rem; font-weight:700; color:var(--green); font-variant-numeric:tabular-nums; transition:color .3s; }
-
-/* MIC PERMISSION */
-.mic-prompt {
-  display:flex; align-items:center; gap:12px; padding:14px 18px;
-  background:var(--amber-light); border:1px solid var(--amber); border-radius:8px;
-  margin-bottom:16px; font-size:0.85rem;
-}
-.mic-prompt svg { width:20px; height:20px; color:var(--amber); flex-shrink:0; }
+/* Checklist */
+.check-group{margin-bottom:16px;}
+.check-group-title{font-size:.8rem;font-weight:700;color:var(--green-dark);margin-bottom:7px;padding-bottom:3px;border-bottom:2px solid var(--green-light);}
+.check-item{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid #f0f0ec;}
+.check-item:last-child{border-bottom:none;}
+.check-item .label-text{flex:1;font-size:.83rem;line-height:1.4;}
+.check-levels{display:flex;gap:3px;}
+.check-level{padding:3px 7px;border:1px solid var(--border);border-radius:5px;font-size:.66rem;font-weight:600;cursor:pointer;transition:all .2s;background:var(--card);font-family:inherit;}
+.check-level:hover{border-color:var(--green);}
+.check-level.sel-1{background:#fef9e7;border-color:var(--amber);color:#8B6914;}
+.check-level.sel-2{background:var(--green-light);border-color:var(--green);color:var(--green);}
+.check-level.sel-3{background:var(--green);border-color:var(--green-dark);color:#fff;}
+/* Screens */
+.screen{display:none;}.screen.active{display:block;}
+/* Responsive */
+@media(max-width:900px){:root{--sidebar-w:195px;}.split-view{grid-template-columns:1fr;}.focus-grid{grid-template-columns:1fr;}}
+@media(max-width:600px){:root{--sidebar-w:175px;}.app-header h1{font-size:1.5rem;}.card{padding:16px;}.phase-dot span{display:none;}}
 </style>
 </head>
 <body>
 
-<div id="noisebar"><div class="fill" id="noisefill"></div></div>
-<div id="noise-warning"><div class="inner">
-  <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="28" stroke="#D4A017" stroke-width="3"/><line x1="32" y1="18" x2="32" y2="36" stroke="#D4A017" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="44" r="2.5" fill="#D4A017"/></svg>
-  <h3>Troppo rumore!</h3>
-  <p>Torniamo al silenzio per poter lavorare con concentrazione.</p>
-</div></div>
-
-<div id="badge-stack"></div>
-
-<div id="violation-overlay"><div class="inner">
-  <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#C0392B" stroke-width="2.5"/><path d="M16 16l16 16M32 16L16 32" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round"/></svg>
-  <h3>Attività sospesa</h3>
-  <p id="violation-msg">Sono stati rilevati troppi comportamenti non corretti. Chiedi al docente di sbloccare l'attività.</p>
-  <div style="margin-top:20px"><input type="password" id="unlock-pin" placeholder="PIN docente" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;text-align:center;width:140px">
-  <button class="btn btn-primary" onclick="tryUnlock()" style="margin-left:8px">Sblocca</button></div>
-</div></div>
-
-<div id="noise-indicator" onclick="toggleMic()">
-  <div class="dot" id="noise-dot"></div>
-  <div><div class="db" id="noise-db">--</div><div class="label">Rumore</div></div>
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-header"><h3>Monitoraggio</h3></div>
+  <div class="sb-section" id="sb-noise">
+    <div class="sb-label">Livello rumore</div>
+    <div id="noise-viz"><div id="noise-bars"></div></div>
+    <div id="noise-level">
+      <span class="pct" id="noise-pct">--%</span>
+      <span class="status" id="noise-status">Silenzio</span>
+    </div>
+    <div id="noise-avg"></div>
+    <div id="noise-silenzio">Silenzio!</div>
+    <div id="noise-penalty">Il rumore sta cancellando il tuo testo...</div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Sessione</div>
+    <div class="timer-display" id="session-timer">00:00</div>
+    <div class="timer-sub" id="session-timer-sub">in corso</div>
+    <div id="sb-wordcount"><div class="wc-num" id="wc-num">0</div><div class="wc-label">parole scritte</div></div>
+  </div>
+  <div class="sb-section" style="flex:1">
+    <div class="sb-label">Comportamento</div>
+    <div id="badge-list"><div class="empty-msg" id="badges-empty">Nessuna segnalazione</div></div>
+    <div id="sentences-lost"></div>
+  </div>
 </div>
 
-<!-- SCREEN: SELECT -->
-<div id="screen-select" class="screen active">
-  <div class="app-header">
-    <h1>Bottega</h1>
-    <div class="sub">Scrivi come un artigiano — impara dai modelli</div>
+<!-- VIOLATION OVERLAY -->
+<div id="violation-overlay"><div class="inner">
+  <svg width="44" height="44" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#C0392B" stroke-width="2.5"/><path d="M16 16l16 16M32 16L16 32" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round"/></svg>
+  <h3>Attivit&agrave; sospesa</h3>
+  <p>Troppi comportamenti non corretti. Chiedi al docente di sbloccare.</p>
+  <div class="pin-row"><input type="password" id="unlock-pin" placeholder="PIN docente"><button class="btn btn-primary" onclick="tryUnlock()">Sblocca</button></div>
+</div></div>
+
+<!-- PDF SAVE MODAL -->
+<div id="pdf-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:2500;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border-radius:var(--radius);padding:36px;max-width:380px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.15);">
+    <h3 style="font-size:1.1rem;color:var(--green-dark);margin-bottom:16px;">Salva il tuo lavoro</h3>
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-mid);margin-bottom:4px;">Nome e Cognome</label>
+      <input type="text" id="pdf-name" placeholder="Es. Marco Rossi" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:.9rem;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-mid);margin-bottom:4px;">Classe</label>
+      <input type="text" id="pdf-class" placeholder="Es. 3B" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:.9rem;">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="document.getElementById('pdf-modal').style.display='none'">Annulla</button>
+      <button class="btn btn-primary" onclick="doExportPDF()">Salva PDF</button>
+    </div>
   </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-wrap" id="main-wrap">
+
+<!-- SELECT -->
+<div id="screen-select" class="screen active">
+  <div class="app-header"><h1>Bottega</h1><div class="sub">Scrivi come un artigiano — impara dai modelli</div></div>
   <div class="container">
     <div class="card">
-      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Scegli la tipologia</h2>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Tipologia testuale</h2>
       <div class="type-grid" id="type-grid"></div>
     </div>
     <div class="card" id="level-card" style="display:none">
@@ -287,924 +244,415 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text)
       </div>
     </div>
     <div class="card" id="model-card" style="display:none">
-      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Scegli il testo modello</h2>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Testo modello</h2>
       <div class="model-list" id="model-list"></div>
     </div>
-    <div class="mic-prompt" id="mic-prompt" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-      <div>Per attivare il misuratore di silenzio, clicca <strong>"Avvia"</strong>. Il microfono serve solo a rilevare il volume, nessun audio viene registrato.</div>
-    </div>
     <div class="btn-row" id="start-row" style="display:none">
-      <button class="btn btn-ghost" onclick="startWithoutMic()">Avvia senza microfono</button>
-      <button class="btn btn-primary" onclick="startWithMic()">Avvia con microfono</button>
+      <button class="btn btn-primary" onclick="startActivity()">Avvia Bottega <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
     </div>
   </div>
 </div>
 
-<!-- SCREEN: OSSERVA -->
+<!-- OSSERVA -->
 <div id="screen-osserva" class="screen">
   <div class="app-header"><h1>Bottega</h1></div>
   <div class="phase-bar" id="phasebar"></div>
   <div class="container">
     <div class="card">
-      <div class="timer-bar">
+      <div class="timer-inline">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <div><div class="time" id="obs-timer">--:--</div><div class="label">Tempo di lettura minimo</div></div>
+        <div><span class="time" id="obs-timer">--:--</span> <span class="label">Tempo minimo di lettura</span></div>
       </div>
       <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Osserva il testo modello</h2>
+      <p style="color:var(--text-mid);font-size:.82rem;margin-bottom:12px">Leggi con attenzione. Osserva la struttura, le parole scelte, la punteggiatura, il ritmo.</p>
       <div class="model-text-display" id="obs-text"></div>
     </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" id="btn-to-analizza" disabled onclick="goPhase('analizza')">
-        Prosegui con l'analisi
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
-    </div>
+    <div class="btn-row"><button class="btn btn-primary" id="btn-to-analizza" disabled onclick="goPhase('analizza')">Prosegui <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
   </div>
 </div>
 
-<!-- SCREEN: ANALIZZA -->
+<!-- ANALIZZA -->
 <div id="screen-analizza" class="screen">
   <div class="app-header"><h1>Bottega</h1></div>
   <div class="phase-bar" id="phasebar2"></div>
   <div class="container">
     <div class="card">
       <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analizza il modello</h2>
-      <p style="color:var(--text-mid);font-size:0.88rem;margin-bottom:20px">Rispondi alle domande osservando il testo. Il modello è consultabile nel pannello laterale.</p>
       <div class="split-view">
-        <div class="split-pane">
-          <h3>Testo modello</h3>
-          <div class="ref-text" id="ana-ref"></div>
-        </div>
-        <div class="split-pane">
-          <h3>Le tue risposte</h3>
-          <div id="ana-questions"></div>
-        </div>
+        <div class="split-pane"><h3>Testo modello</h3><div class="ref-text" id="ana-ref"></div></div>
+        <div class="split-pane"><h3>Comprensione e struttura</h3><div id="ana-questions"></div></div>
+      </div>
+      <div class="focus-section">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="#8B6914" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Focus linguistico</h3>
+        <div class="focus-grid" id="focus-grid"></div>
       </div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goPhase('osserva')">Torna a leggere</button>
-      <button class="btn btn-primary" onclick="goPhase('scrivi')">Passa alla scrittura
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
+      <button class="btn btn-ghost" onclick="goPhase('osserva')">Rileggi</button>
+      <button class="btn btn-primary" onclick="goPhase('scrivi')">Scrivi <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
     </div>
   </div>
 </div>
 
-<!-- SCREEN: SCRIVI -->
+<!-- SCRIVI -->
 <div id="screen-scrivi" class="screen">
   <div class="app-header"><h1>Bottega</h1></div>
   <div class="phase-bar" id="phasebar3"></div>
   <div class="container">
     <div class="card">
-      <div class="timer-bar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        <div><div class="time" id="write-timer">00:00</div><div class="label">Tempo di scrittura</div></div>
-      </div>
       <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Scrivi il tuo testo</h2>
+      <p style="color:var(--text-mid);font-size:.82rem;margin-bottom:12px">Segui la struttura del modello. Cura ortografia, punteggiatura e lessico. Attenzione: se il rumore supera la soglia, l'ultima frase del tuo testo svanir&agrave;.</p>
       <div class="split-view">
-        <div class="split-pane">
-          <h3>Modello di riferimento</h3>
-          <div class="ref-text" id="write-ref"></div>
-        </div>
+        <div class="split-pane"><h3>Modello di riferimento</h3><div class="ref-text" id="write-ref"></div></div>
         <div class="split-pane">
           <h3>Il tuo testo</h3>
-          <textarea id="write-area" placeholder="Inizia a scrivere il tuo testo seguendo la struttura del modello..."></textarea>
-          <div class="word-count"><span id="wc">0</span> parole</div>
+          <div id="write-area" contenteditable="true" data-placeholder="Inizia a scrivere..."></div>
         </div>
       </div>
     </div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goPhase('analizza')">Torna all'analisi</button>
-      <button class="btn btn-primary" onclick="goPhase('confronta')">Vai al confronto
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
+      <button class="btn btn-primary" onclick="goPhase('confronta')">Confronta <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
     </div>
   </div>
 </div>
 
-<!-- SCREEN: CONFRONTA -->
+<!-- CONFRONTA -->
 <div id="screen-confronta" class="screen">
   <div class="app-header"><h1>Bottega</h1></div>
   <div class="phase-bar" id="phasebar4"></div>
   <div class="container">
     <div class="card">
-      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg> Confronta e autovaluta</h2>
-      <p style="color:var(--text-mid);font-size:0.88rem;margin-bottom:20px">Rileggi il tuo testo affiancato al modello. Per ogni aspetto, indica il livello raggiunto.</p>
-      <div class="split-view" style="margin-bottom:24px">
-        <div class="split-pane">
-          <h3>Modello</h3>
-          <div class="ref-text" id="conf-ref"></div>
-        </div>
-        <div class="split-pane">
-          <h3>Il tuo testo</h3>
-          <div class="ref-text" id="conf-mine" style="background:var(--amber-light);border:none"></div>
-        </div>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Confronta e autovaluta</h2>
+      <div class="split-view" style="margin-bottom:18px">
+        <div class="split-pane"><h3>Modello</h3><div class="ref-text" id="conf-ref"></div></div>
+        <div class="split-pane"><h3>Il tuo testo</h3><div class="ref-text" id="conf-mine" style="background:var(--amber-bg);border:none;user-select:text;-webkit-user-select:text;"></div></div>
       </div>
-      <h3 style="font-size:0.95rem;margin-bottom:16px;color:var(--green-dark)">Checklist di autovalutazione</h3>
       <div id="checklist"></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goPhase('scrivi')">Torna a scrivere</button>
-      <button class="btn btn-secondary" onclick="exportPDF()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Esporta PDF
-      </button>
+      <button class="btn btn-secondary" onclick="document.getElementById('pdf-modal').style.display='flex'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Esporta PDF</button>
     </div>
   </div>
 </div>
 
+</div>
+
 <script>
-// ===================== MODEL LIBRARY =====================
-const LIBRARY = {
-  narrativo: {
-    label: "Narrativo",
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>`,
-    checklist: [
-      "La struttura segue lo schema del modello (inizio, sviluppo, conclusione)",
-      "Il punto di vista narrativo è coerente",
-      "I connettivi temporali guidano il lettore",
-      "Il ritmo della narrazione è simile al modello",
-      "Il registro linguistico è appropriato",
-      "La conclusione chiude in modo efficace"
-    ],
-    models: [
-      {id:"narr_p1",level:"primaria",title:"Il giorno della gita",
-        text:`Quella mattina mi sono svegliato prima della sveglia. Lo zaino era già pronto sul pavimento, con il pranzo al sacco e la bottiglietta d'acqua.\n\nIn pullman ho trovato posto vicino al finestrino. Fuori i campi correvano veloci, poi sono arrivate le colline. Marco mi ha offerto una caramella alla menta, quella che pizzica la lingua.\n\nAl castello abbiamo seguito la guida lungo corridoi stretti e freddi. Ho toccato il muro: era umido e ruvido. In cima alla torre si vedeva tutto, anche il nostro pullman piccolo come un giocattolo.\n\nAl ritorno, sull'autobus, nessuno parlava più. Eravamo stanchi e felici, con le scarpe piene di terra.`,
-        questions:[
-          "In quante parti è diviso il racconto? Che cosa succede in ciascuna?",
-          "Quali parole ti fanno capire che il tempo passa?",
-          "L'autore usa i cinque sensi: trovane almeno due esempi.",
-          "Come cambia lo stato d'animo del protagonista dall'inizio alla fine?",
-          "Perché secondo te l'ultima frase è efficace?"
-        ]},
-      {id:"narr_p2",level:"primaria",title:"La scatola misteriosa",
-        text:`Nel giardino della nonna, dietro il cespuglio di rose, c'era una scatola di latta. Era coperta di terra e ruggine, con un disegno sbiadito sul coperchio.\n\nHo provato ad aprirla, ma era bloccata. Sono corso in garage a prendere un cacciavite. Le mani mi tremavano un po'.\n\nDentro ho trovato una fotografia in bianco e nero: un bambino con le ginocchia sbucciate sorrideva davanti a questa stessa casa. Sul retro, una scritta: "Estate 1962".\n\nHo portato la foto alla nonna. Lei l'ha guardata a lungo, poi ha sorriso: "Quello è tuo nonno. Aveva la tua stessa faccia da avventuriero."`,
-        questions:[
-          "Qual è l'evento che mette in moto la storia?",
-          "Come crea suspense l'autore prima di rivelare il contenuto?",
-          "Trova i dettagli descrittivi che rendono la scena concreta.",
-          "Qual è la sorpresa finale? Come è collegata all'inizio?",
-          "Che funzione ha il dialogo nella chiusura del racconto?"
-        ]},
-      {id:"narr_p3",level:"primaria",title:"Il temporale estivo",
-        text:`Il cielo è diventato viola in pochi minuti. Le rondini volavano basse, quasi a sfiorare l'erba.\n\nLa nonna ha staccato la spina della televisione e ha chiuso le persiane. Io mi sono seduto sul divano con il cane, che tremava tutto.\n\nIl primo tuono è stato così forte che ho sentito vibrare il pavimento. Poi la pioggia, tutta insieme, come se qualcuno avesse rovesciato un secchio gigante.\n\nDopo mezz'ora è tornato il sole. Il giardino brillava. C'era un odore buono di terra bagnata e l'arcobaleno tagliava il cielo in due.`,
-        questions:[
-          "Come è organizzato il tempo nel racconto? Prima, durante e dopo cosa?",
-          "Trova una similitudine: che effetto produce?",
-          "Quali sensi utilizza l'autore? Fai un elenco con gli esempi.",
-          "Come cambiano le emozioni durante il racconto?",
-          "L'ultimo paragrafo ha un tono diverso dai precedenti: perché?"
-        ]},
-      {id:"narr_s1",level:"secondaria",title:"L'ultimo treno",
-        text:`La stazione era quasi vuota. Solo un uomo con un cappotto grigio sedeva sulla panchina del binario 3, le mani strette intorno a un bicchiere di carta.\n\nIl tabellone lampeggiava: "Treno 9247 — ritardo 35 minuti." Sara ha sospirato. Ogni minuto in più in quella stazione era un minuto in meno di coraggio.\n\nAveva deciso di partire quella mattina, mentre lavava i piatti. Una decisione improvvisa e chiarissima, come quando il ghiaccio si rompe sotto il peso. Aveva riempito una valigia, non troppo grande, e aveva lasciato le chiavi sul tavolo della cucina.\n\nQuando finalmente il treno è arrivato, le porte si sono aperte con un soffio. Sara è salita senza voltarsi. Dal finestrino, la stazione si è rimpicciolita, poi è scomparsa. Ha appoggiato la fronte sul vetro freddo e ha sorriso, per la prima volta in settimane.`,
-        questions:[
-          "Il racconto mescola il presente in stazione con un flashback: dove avviene il passaggio?",
-          "Che funzione ha la similitudine del ghiaccio che si rompe?",
-          "Come contribuisce l'ambientazione (stazione, freddo, vuoto) allo stato d'animo della protagonista?",
-          "Quali dettagli sono scelti per far capire la decisione di Sara senza dirla esplicitamente?",
-          "Che effetto produce il sorriso finale dopo il tono cupo del racconto?"
-        ]},
-      {id:"narr_s2",level:"secondaria",title:"La lettera nel cassetto",
-        text:`Ho trovato la lettera mentre cercavo le forbici. Era in fondo al secondo cassetto della scrivania di mio padre, sotto una busta di foto e un vecchio righello di legno.\n\nLa busta era aperta, la carta ingiallita. La calligrafia era ordinata ma piccola, come di chi scrive in fretta e non vuole sprecare spazio. Iniziava con "Caro Marco" — il nome di mio padre — e finiva con "il tuo amico di sempre, Enrico".\n\nEnrico parlava di un viaggio in bicicletta che avevano fatto da ragazzi, di un temporale che li aveva sorpresi, di una notte passata in un fienile a raccontarsi il futuro. "Tu dicevi che avresti fatto il pilota," scriveva. "Io volevo diventare cuoco. Ci siamo sbagliati tutti e due, ma forse è andata meglio così."\n\nHo rimesso la lettera al suo posto, sotto le foto e il righello. Ma per il resto della giornata ho guardato mio padre in modo diverso, come si guarda una persona che ha avuto una vita prima di te.`,
-        questions:[
-          "Il racconto ha una cornice (il ritrovamento) e un contenuto (la lettera): come interagiscono?",
-          "Perché l'autore descrive con precisione la posizione della lettera nel cassetto?",
-          "Che tono ha la voce di Enrico? Da quali scelte linguistiche lo capisci?",
-          "Come cambia la percezione del narratore verso il padre? Dove lo capisci?",
-          "L'ultima frase è la chiave del racconto: che cosa significa esattamente?"
-        ]},
-      {id:"narr_s3",level:"secondaria",title:"Cinque minuti",
-        text:`Il professor Mancini aveva una regola: se arrivavi in ritardo di più di cinque minuti, non entravi. Non c'era appello, non c'era scusa.\n\nQuel lunedì mi sono svegliato alle 7:42. La sveglia non era suonata, o forse l'avevo spenta nel sonno. Ho fatto le scale di corsa, con la maglia al contrario e lo zaino aperto.\n\nAlla fermata del bus, il display segnava tre minuti. Ho contato ogni secondo. Il bus è arrivato con due minuti di ritardo. Ho corso dal cancello all'aula.\n\nSono entrato ansimando. Mancini ha guardato l'orologio sopra la lavagna, poi me. Ho sentito il cuore nelle orecchie.\n\n"Quattro minuti e cinquanta secondi," ha detto. Poi ha indicato il mio posto con il mento.\n\nMi sono seduto. Solo allora ho notato che avevo due scarpe diverse.`,
-        questions:[
-          "Come crea tensione l'autore? Individua almeno tre tecniche.",
-          "Che ruolo ha il tempo (orari, secondi, minuti) nella struttura del racconto?",
-          "Il finale è comico: come funziona il contrasto con il resto del racconto?",
-          "Analizza la frase del professore: che effetto ha il discorso diretto in quel punto?",
-          "Che tipo di narratore è? Quali vantaggi porta alla storia?"
-        ]}
-    ]
-  },
-  descrittivo: {
-    label: "Descrittivo",
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`,
-    checklist: [
-      "La descrizione segue un ordine logico (spaziale, sensoriale, dal generale al particolare)",
-      "Sono presenti riferimenti ad almeno tre sensi diversi",
-      "Gli aggettivi sono precisi e non generici",
-      "Le similitudini o metafore arricchiscono il testo",
-      "Il tono è coerente con quello del modello",
-      "Il lettore riesce a 'vedere' la scena descritta"
-    ],
-    models: [
-      {id:"desc_p1",level:"primaria",title:"Il mercato del sabato",
-        text:`Il mercato del sabato occupa tutta la piazza. I banchi sono uno accanto all'altro, con i teloni colorati che fanno ombra.\n\nVicino all'ingresso c'è il banco della frutta. Le mele sono impilate in piramidi perfette, rosse e lucide. Accanto, le arance profumano così tanto che le senti a tre passi di distanza.\n\nPiù avanti, il banco del formaggio. Il signore con il grembiule bianco taglia fette con un filo sottile. L'odore è forte, un po' pungente.\n\nIn fondo alla piazza c'è la bancarella dei giocattoli usati. Un trenino di legno con la vernice scrostata, un puzzle con la scatola rotta, soldatini senza un braccio. Sono vecchi, ma qualcuno li compra sempre.`,
-        questions:[
-          "In che ordine è organizzata la descrizione? Come si muove l'autore nella piazza?",
-          "Trova un esempio per ciascun senso usato nel testo.",
-          "Quali aggettivi sono particolarmente precisi? Perché funzionano?",
-          "L'ultimo paragrafo ha un tono leggermente diverso: quale? Perché?",
-          "Se dovessi aggiungere un suono a questo mercato, quale sarebbe e dove lo metteresti?"
-        ]},
-      {id:"desc_p2",level:"primaria",title:"La mia stanza al mattino",
-        text:`La mia stanza al mattino è un posto tranquillo. La luce entra dalla finestra e disegna un rettangolo chiaro sul pavimento.\n\nIl letto è ancora sfatto, con il cuscino che ha ancora la forma della mia testa. Sul comodino c'è il bicchiere d'acqua di ieri sera, mezzo pieno.\n\nLa scrivania è il posto meno ordinato: fogli, matite, un astuccio aperto. Il quaderno di matematica è rimasto aperto alla pagina delle frazioni.\n\nSul muro, sopra il letto, ci sono le cartoline delle vacanze. Quella del mare è la più sbiadita, perché è lì da tre anni.`,
-        questions:[
-          "Da dove comincia la descrizione e dove finisce? Che percorso fa lo sguardo?",
-          "Quali dettagli ci fanno capire che è mattina presto?",
-          "Trova un particolare che racconta qualcosa del carattere del protagonista.",
-          "Il testo usa frasi brevi: che effetto produce?",
-          "Perché l'autore ci dice che la cartolina è sbiadita? Che informazione aggiunge?"
-        ]},
-      {id:"desc_p3",level:"primaria",title:"Il cane del vicino",
-        text:`Il cane del vicino si chiama Briciola, ma di briciola non ha niente. È grosso, con il pelo marrone e folto, e le zampe larghe come piattini.\n\nQuando mi vede, comincia a scodinzolare così forte che tutto il corpo si muove. La coda sembra un tergicristallo impazzito.\n\nHa il muso quadrato e gli occhi scuri, sempre un po' tristi anche quando è contento. Sotto il mento ha una macchia bianca a forma di stella.\n\nDi solito sta sdraiato davanti al cancello, con il muso appoggiato sulle zampe. Ogni tanto alza la testa per controllare chi passa, poi torna a dormire. La sua giornata è fatta così.`,
-        questions:[
-          "Come è organizzata la descrizione? Dall'aspetto generale ai dettagli o viceversa?",
-          "Trova le due similitudini: che effetto producono?",
-          "Quali dettagli fanno sembrare Briciola un personaggio con una personalità?",
-          "L'ultima frase chiude con un commento dell'autore: che tono ha?",
-          "Come fa l'autore a rendere simpatico il cane senza dire 'è simpatico'?"
-        ]},
-      {id:"desc_s1",level:"secondaria",title:"L'alba sul lago",
-        text:`Alle cinque del mattino il lago non ha colore. È una superficie piatta e grigia, indistinguibile dal cielo che la sovrasta. L'unico suono è quello dell'acqua che tocca i sassi sulla riva, un rumore piccolo e regolare, come un respiro.\n\nPoi la luce comincia a lavorare. Prima un chiarore diffuso, senza direzione, che sbiadisce le stelle. Poi una striscia arancione all'orizzonte, sottile come un taglio. Il lago la cattura e la allunga, raddoppiandola.\n\nIn pochi minuti i colori si moltiplicano: rosa, oro, azzurro. Le montagne escono dall'ombra una alla volta, come sagome in un teatro di carta. Un airone si stacca dalla riva e vola rasente all'acqua, spezzando il riflesso.\n\nAlle sei il lago è tornato ad essere semplicemente un lago. Ma per un'ora, all'alba, è stato qualcosa di più.`,
-        questions:[
-          "La descrizione segue il passare del tempo: individua i marcatori temporali.",
-          "Come usa l'autore la luce come elemento strutturante della descrizione?",
-          "Trova due similitudini e spiegane l'effetto.",
-          "L'ultima frase contiene un giudizio implicito: qual è? Come lo esprimerebbe un testo informativo?",
-          "Che ruolo ha l'airone nella struttura descrittiva? Potrebbe essere tolto senza perdere nulla?"
-        ]},
-      {id:"desc_s2",level:"secondaria",title:"La biblioteca comunale",
-        text:`La biblioteca comunale è al secondo piano di un palazzo ottocentesco con le pareti scrostate e un portone che cigola. La scala di marmo ha i gradini consumati al centro, dove migliaia di piedi li hanno levigati.\n\nAll'ingresso l'odore cambia. L'aria diventa secca, un misto di carta vecchia, legno e qualcosa di dolciastro, come vaniglia. È l'odore dei libri che invecchiano, dicono.\n\nLa sala principale ha il soffitto alto, con una finestra ovale che proietta un cerchio di luce sul pavimento. Gli scaffali di legno scuro arrivano fin quasi al soffitto. Per raggiungere i ripiani più alti c'è una scala a pioli che scorre su un binario di ottone.\n\nIl silenzio non è mai totale: c'è sempre il fruscio di una pagina, il ticchettio di una tastiera, il rumore soffocato di una sedia che viene spostata. Ma è un silenzio pieno, non vuoto.`,
-        questions:[
-          "L'autore costruisce la descrizione come un percorso fisico: ricostruiscilo.",
-          "L'odore è descritto in modo complesso: come lo scompone?",
-          "Che cos'è un 'silenzio pieno'? Come riesce l'autore a rendere concreta un'astrazione?",
-          "Quali dettagli rivelano che questo è un luogo antico e usato?",
-          "Qual è il tono complessivo? Nostalgico, neutro, affettuoso? Giustifica con il testo."
-        ]}
-    ]
-  },
-  argomentativo: {
-    label: "Argomentativo",
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`,
-    checklist: [
-      "La tesi è chiaramente espressa",
-      "Gli argomenti a sostegno sono almeno due",
-      "È presente un'obiezione o un punto di vista contrario",
-      "I connettivi logici (perché, quindi, tuttavia, infatti) sono usati correttamente",
-      "La conclusione riprende e rafforza la tesi",
-      "Il registro è coerente con il destinatario"
-    ],
-    models: [
-      {id:"arg_p1",level:"primaria",title:"Perché è importante leggere",
-        text:`Leggere è importante, e non solo perché lo dicono i grandi. Leggere serve davvero, e vi spiego perché.\n\nPrima di tutto, leggendo si imparano parole nuove. Chi legge ha più parole a disposizione, e chi ha più parole riesce a spiegare meglio quello che pensa.\n\nInoltre, leggere allena il cervello. È come la ginnastica, ma per la mente: bisogna immaginare, ricordare, collegare le cose tra loro.\n\nQualcuno dice che leggere è noioso. È vero che non tutti i libri sono interessanti, ma questo vale anche per i film e i videogiochi. La soluzione non è smettere di leggere, ma trovare il libro giusto.\n\nIn conclusione, leggere ci rende più capaci, più curiosi e più liberi. E un libro non ha mai bisogno di essere ricaricato.`,
-        questions:[
-          "Qual è la tesi dell'autore? In quale frase è espressa?",
-          "Quanti argomenti porta a sostegno? Elencali.",
-          "C'è un'obiezione (qualcuno la pensa diversamente): dove? Come viene risposto?",
-          "Quali parole servono a collegare le parti del ragionamento?",
-          "La frase finale è una battuta: che funzione ha in un testo argomentativo?"
-        ]},
-      {id:"arg_p2",level:"primaria",title:"Gli animali in classe",
-        text:`Nella nostra scuola non è permesso portare animali. Io penso che dovrebbe essere permesso, almeno un animale per classe, e voglio spiegare le mie ragioni.\n\nPrendersi cura di un animale insegna la responsabilità. Bisogna ricordarsi di dargli da mangiare, pulire, osservare se sta bene. Sono cose che non si imparano solo dai libri.\n\nIn più, molte ricerche dicono che avere un animale vicino riduce lo stress. E a scuola, specialmente nei giorni delle verifiche, un po' di calma farebbe bene a tutti.\n\nÈ vero che ci sono problemi pratici: le allergie, il rumore, la pulizia. Ma si possono scegliere animali adatti, come le tartarughe o i pesci, che non creano questi problemi.\n\nQuindi, con le giuste precauzioni, un animale in classe sarebbe un'esperienza educativa importante.`,
-        questions:[
-          "Dove si trova la tesi? È all'inizio o alla fine?",
-          "L'autore presenta due vantaggi: quali sono? Con quale tecnica li introduce?",
-          "Come affronta le possibili obiezioni?",
-          "La parola 'quindi' nell'ultima frase ha un ruolo preciso: quale?",
-          "Questo testo vuole convincere. Secondo te ci riesce? Perché sì o perché no?"
-        ]},
-      {id:"arg_s1",level:"secondaria",title:"Smartphone a scuola: sì o no?",
-        text:`La questione dello smartphone a scuola divide insegnanti, genitori e studenti. Dopo averci riflettuto, credo che lo smartphone debba essere ammesso, ma con regole precise.\n\nIl primo motivo è pratico: lo smartphone è uno strumento potente. Con esso si possono consultare dizionari, fare ricerche, documentare esperimenti, registrare appunti. Vietarlo significa rinunciare a un'opportunità didattica reale.\n\nIl secondo motivo è educativo in senso profondo: se la scuola vuole insegnare a vivere nel mondo, deve insegnare anche a usare la tecnologia in modo consapevole. Vietare non educa; semmai, rimanda il problema.\n\nTuttavia, è innegabile che lo smartphone sia anche fonte di distrazione, cyberbullismo e dipendenza. Chi si oppone al suo utilizzo in aula ha ragioni legittime.\n\nLa soluzione, a mio avviso, non è il divieto totale, ma l'uso regolamentato: momenti precisi in cui si usa, regole condivise, conseguenze chiare per chi non le rispetta.\n\nIn sintesi, la scuola dovrebbe insegnare a usare lo smartphone, non a nasconderlo.`,
-        questions:[
-          "La tesi è netta o sfumata? Dove viene espressa? Come viene ripresa alla fine?",
-          "L'autore distingue un motivo 'pratico' e uno 'educativo': perché questa scelta?",
-          "Come viene trattata la posizione contraria? È ridicolizzata o rispettata?",
-          "Individua i connettivi logici principali e la funzione di ciascuno.",
-          "L'ultima frase è efficace: che tecnica retorica usa?"
-        ]},
-      {id:"arg_s2",level:"secondaria",title:"Il volontariato dovrebbe essere obbligatorio?",
-        text:`In molte scuole europee il volontariato è obbligatorio. In Italia se ne discute. Io penso che rendere il volontariato obbligatorio sia un errore, anche se con buone intenzioni.\n\nIl volontariato ha valore proprio perché è una scelta libera. Costringere qualcuno ad aiutare gli altri toglie il significato più profondo del gesto: la gratuità. Un volontario obbligato è una contraddizione.\n\nInoltre, l'obbligo rischia di trasformare un'esperienza formativa in un compito burocratico. Se devo "fare le ore", il mio obiettivo diventa completare un numero, non comprendere un bisogno.\n\nD'altro canto, chi sostiene l'obbligo ha un punto valido: senza una spinta iniziale, molti ragazzi non proverebbero mai il volontariato e non scoprirebbero quanto può arricchirli.\n\nLa mia proposta è diversa: non obbligo, ma opportunità strutturata. La scuola dovrebbe offrire esperienze di volontariato ben organizzate, con accompagnamento e riflessione, rendendole attraenti, non imposte.\n\nLa vera educazione alla solidarietà nasce dalla libertà, non dall'obbligo.`,
-        questions:[
-          "Qual è la struttura argomentativa? Mappa le parti: tesi, argomenti, obiezione, proposta, conclusione.",
-          "L'autore usa il concetto di 'contraddizione': è un argomento logico o emotivo?",
-          "Come tratta la posizione opposta? La riconosce o la demolisce?",
-          "Che differenza c'è tra 'obbligo' e 'opportunità strutturata'? Perché è il cuore del testo?",
-          "Il registro è formale ma accessibile: trova tre scelte linguistiche che lo dimostrano."
-        ]},
-      {id:"arg_s3",level:"secondaria",title:"Social network e amicizia",
-        text:`Si dice spesso che i social network rovinano le amicizie. Io credo che questa affermazione sia troppo semplice, e che la realtà sia più sfumata.\n\nÈ vero che i social possono creare relazioni superficiali. Avere trecento "amici" online non significa avere trecento amici veri. Il rischio di confondere popolarità con amicizia esiste ed è reale.\n\nTuttavia, i social network permettono anche di mantenere relazioni che altrimenti si perderebbero. Un compagno che cambia scuola, un cugino che vive lontano: senza i social, molti legami si spezzerebbero nel silenzio.\n\nInoltre, per chi è timido o ha difficoltà nelle relazioni dal vivo, lo spazio digitale può essere un primo passo per aprirsi, un luogo dove sentirsi meno giudicati.\n\nIl problema non è lo strumento, ma come lo si usa. Un social network usato con consapevolezza può rafforzare le amicizie; usato male, può impoverirle.\n\nLa domanda giusta non è "i social rovinano le amicizie?" ma "io come uso i social nelle mie amicizie?"`,
-        questions:[
-          "La tesi non è netta ma sfumata: perché l'autore fa questa scelta?",
-          "Individua la struttura: quante argomentazioni a favore e quante contro?",
-          "L'ultima frase ribalta la domanda iniziale: che effetto produce?",
-          "Trova i connettivi avversativi (tuttavia, però...): che funzione hanno nel ragionamento?",
-          "L'autore parla in prima persona: è una scelta efficace per un testo argomentativo?"
-        ]}
-    ]
-  },
-  lettera: {
-    label: "Lettera",
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
-    checklist: [
-      "Sono presenti tutti gli elementi formali (data, destinatario, formula di apertura e chiusura)",
-      "Il registro è adeguato al destinatario",
-      "Lo scopo della lettera è chiaro",
-      "Il contenuto è organizzato in paragrafi logici",
-      "La formula di chiusura è coerente con il tono",
-      "Il testo mantiene il rapporto con il destinatario (uso del tu/Lei)"
-    ],
-    models: [
-      {id:"let_p1",level:"primaria",title:"Lettera a un amico lontano",
-        text:`Orzinuovi, 15 marzo 2026\n\nCaro Luca,\n\nè passato tanto tempo dall'ultima volta che ci siamo visti! Mi manchi, soprattutto quando in classe facciamo qualcosa di divertente e penso: "Luca qui si sarebbe divertito un sacco."\n\nTi racconto una cosa bella: la settimana scorsa abbiamo fatto un laboratorio di scienze con i vulcani. Abbiamo usato aceto e bicarbonato e il vulcano ha "eruttato" davvero! Il mio gruppo ha fatto quello più alto di tutti.\n\nCome stai nella scuola nuova? Hai trovato dei compagni simpatici? Spero che ti trovi bene, ma sappi che qui il tuo banco è ancora vicino al mio.\n\nScrivimi quando puoi!\n\nIl tuo amico,\nMarco`,
-        questions:[
-          "Quali parti formali ha questa lettera? Elencale.",
-          "Che tono usa Marco? Formale o informale? Da cosa lo capisci?",
-          "L'autore racconta un episodio: perché lo fa? Che funzione ha?",
-          "Come mantiene il legame con Luca? Trova le frasi che mostrano affetto.",
-          "La frase 'il tuo banco è ancora vicino al mio' è potente: perché?"
-        ]},
-      {id:"let_p2",level:"primaria",title:"Lettera alla maestra",
-        text:`Orzinuovi, 20 giugno 2026\n\nCara maestra Giulia,\n\nvolevo scriverle per dirle grazie, adesso che la quinta è finita e noi andiamo alle medie.\n\nGrazie per la pazienza che ha avuto con me, soprattutto in matematica. All'inizio le frazioni mi facevano venire il mal di testa, ma lei me le ha spiegate con le pizze e alla fine ho capito.\n\nMi ricorderò sempre del giorno in cui abbiamo letto la storia del Piccolo Principe. Lei ci ha chiesto: "Che cosa vedete voi quando guardate una scatola?" E nessuno ha risposto "una scatola". Quello è stato il giorno in cui ho capito che a scuola si impara a guardare meglio.\n\nLe auguro una buona estate. Mi mancherà.\n\nCon affetto,\nElena`,
-        questions:[
-          "Il registro è formale o informale? Come tratta il 'Lei'?",
-          "Elena ringrazia, ma lo fa attraverso episodi concreti: perché è più efficace che dire solo 'grazie'?",
-          "Quale episodio è il più significativo? Perché l'autrice lo mette alla fine?",
-          "Che immagine emerge della maestra dal testo?",
-          "La chiusura è breve ma efficace: cosa la rende tale?"
-        ]},
-      {id:"let_s1",level:"secondaria",title:"Lettera al sindaco",
-        text:`Orzinuovi, 10 aprile 2026\n\nEgregio Signor Sindaco,\n\nmi chiamo Sara Conti, ho 13 anni e frequento la scuola secondaria di primo grado. Le scrivo per segnalare un problema che riguarda la pista ciclabile di via Roma.\n\nDa alcune settimane la pista è in condizioni pessime: l'asfalto è rovinato in più punti, la segnaletica è sbiadita e in due tratti le radici degli alberi hanno sollevato il terreno creando dossi pericolosi. Io la percorro ogni mattina per andare a scuola e devo spesso spostarmi sulla strada, con evidenti rischi per la sicurezza.\n\nChiedo cortesemente che il Comune valuti un intervento di manutenzione. Una pista ciclabile sicura incoraggia l'uso della bicicletta e riduce il traffico, con benefici per tutti.\n\nResto a disposizione per qualsiasi chiarimento e ringrazio per l'attenzione.\n\nDistinti saluti,\nSara Conti`,
-        questions:[
-          "Questa lettera è formale: individua tutte le convenzioni formali rispettate.",
-          "Il tono è rispettoso ma fermo: come ottiene questo equilibrio?",
-          "La segnalazione è concreta e specifica: perché è una scelta strategica?",
-          "Nel terzo paragrafo l'autrice aggiunge un argomento: quale? Perché è efficace?",
-          "Confronta questa lettera con quella 'all'amico': elenca tre differenze strutturali."
-        ]},
-      {id:"let_s2",level:"secondaria",title:"Lettera a un personaggio storico",
-        text:`21 ottobre 2026\n\nCaro Leonardo,\n\nle scrivo dal futuro, più di cinquecento anni dopo la sua epoca. Mi chiamo Alessio, ho dodici anni e frequento una scuola nel nord Italia, non lontano da Milano.\n\nHo studiato i suoi codici e i suoi disegni, e la cosa che mi ha colpito di più non sono le macchine volanti o i ponti impossibili, ma il modo in cui lei guardava le cose. Lei disegnava l'acqua per capire come si muove. Apriva gli animali per capire come funzionano. Studiava le ombre per capire la luce.\n\nOggi noi abbiamo strumenti che lei non poteva immaginare: computer, fotografie, simulazioni. Eppure molti di noi guardano senza vedere. Credo che il suo insegnamento più grande non sia un'invenzione, ma un metodo: osservare con attenzione prima di concludere.\n\nSe potesse vedere il mondo di oggi, sono sicuro che troverebbe mille cose da disegnare nel suo taccuino.\n\nCon ammirazione,\nAlessio`,
-        questions:[
-          "Questa lettera mescola registro formale (Lei) e tono personale: come riesce?",
-          "Quale tesi sostiene Alessio su Leonardo? Dove la esprime?",
-          "Il secondo paragrafo usa una struttura a tre elementi: individuala. Che effetto crea?",
-          "Il confronto passato/presente è il cuore del testo: come è costruito?",
-          "L'ultima frase chiude con un'immagine concreta: perché è efficace?"
-        ]},
-      {id:"let_s3",level:"secondaria",title:"Lettera di reclamo (ristorante)",
-        text:`Brescia, 5 novembre 2026\n\nSpett.le Direzione del Ristorante "La Quercia",\n\nvi scrivo in merito alla cena del 2 novembre scorso, durante la quale si sono verificati alcuni disagi che desidero segnalare.\n\nIl nostro tavolo, prenotato per le 20:00, è stato assegnato solo alle 20:35, senza alcuna spiegazione per il ritardo. Una volta seduti, l'attesa per le ordinazioni è stata di ulteriori venti minuti.\n\nIl piatto principale che ho ordinato (tagliata di manzo con rucola) è arrivato freddo. Ho segnalato il problema al cameriere, che si è scusato ma non ha proposto alcuna soluzione.\n\nIl conto, nonostante i disservizi, era completo e senza alcuno sconto.\n\nNon scrivo per polemica, ma perché in passato ho apprezzato il vostro locale e mi dispiacerebbe non poterci tornare. Confido in un vostro riscontro.\n\nCordiali saluti,\nMarco Bianchi`,
-        questions:[
-          "Analizza la struttura: quanti paragrafi e che funzione ha ciascuno?",
-          "Il tono è fermo ma non aggressivo: quali scelte linguistiche lo garantiscono?",
-          "Perché l'autore specifica date, orari e piatti? Che strategia comunicativa è?",
-          "Il penultimo paragrafo cambia registro: come? Perché?",
-          "Confronta questa lettera con quella al sindaco: che cosa hanno in comune nella strategia?"
-        ]}
-    ]
-  },
-  cronaca: {
-    label: "Cronaca",
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2z"/></svg>`,
-    checklist: [
-      "Il titolo è informativo e cattura l'attenzione",
-      "Il lead (prima frase/paragrafo) risponde alle 5W",
-      "I fatti sono presentati in ordine logico o cronologico",
-      "Le fonti o testimonianze sono citate correttamente",
-      "Il registro è oggettivo e impersonale",
-      "La chiusura aggiunge un'informazione prospettica (cosa succederà)"
-    ],
-    models: [
-      {id:"cron_p1",level:"primaria",title:"La festa della scuola",
-        text:`GRANDE SUCCESSO PER LA FESTA DI FINE ANNO\n\nVenerdì 6 giugno si è svolta la festa di fine anno della scuola primaria "G. Rodari" di Orzinuovi. L'evento, organizzato dai genitori e dagli insegnanti, ha coinvolto circa 200 persone tra alunni, famiglie e ospiti.\n\nLa festa è iniziata alle 17:00 nel cortile della scuola con l'esibizione del coro, che ha cantato tre brani preparati durante l'anno. Poi ogni classe ha presentato un breve spettacolo: la classe terza ha recitato una poesia, la quarta ha messo in scena uno sketch comico.\n\nIl momento più atteso è stato il gioco a squadre nel giardino, dove i genitori hanno sfidato i figli in una staffetta con i sacchi. Hanno vinto i bambini.\n\n"È stata una giornata bellissima," ha detto la maestra Carla. "I bambini erano emozionati e orgogliosi."\n\nLa festa si è conclusa alle 20:00 con una merenda condivisa.`,
-        questions:[
-          "Il titolo che funzione ha? Che informazione dà?",
-          "Il primo paragrafo risponde alle 5W (chi, che cosa, quando, dove, perché): trovale.",
-          "I fatti sono in ordine cronologico: ricostruisci la sequenza.",
-          "C'è una citazione diretta: chi parla? Perché è stata inserita?",
-          "Il tono è diverso da un racconto: in cosa? Trova una frase che non troveresti in un racconto."
-        ]},
-      {id:"cron_p2",level:"primaria",title:"L'evento sportivo",
-        text:`TORNEO DI MINIVOLLEY: VINCE LA CLASSE QUARTA B\n\nMercoledì 12 marzo, nella palestra della scuola "Sacra Famiglia", si è svolto il torneo di minivolley tra le classi quarte. Hanno partecipato quattro squadre, una per sezione.\n\nLe partite sono durate tutta la mattina, dalle 9:00 alle 12:30. Ogni incontro durava due set da 15 minuti. La semifinale più combattuta è stata quella tra la 4A e la 4C, terminata ai vantaggi.\n\nIn finale si sono affrontate la 4B e la 4C. La 4B ha vinto 2 set a 1, grazie anche ai servizi precisi di Martina e alla difesa di Tommaso.\n\nL'insegnante di educazione fisica, il maestro Luca, ha commentato: "Tutte le squadre hanno giocato con fair play. Il risultato conta, ma lo spirito sportivo conta di più."\n\nIl prossimo torneo sarà dedicato alla pallacanestro e si terrà a maggio.`,
-        questions:[
-          "Il titolo anticipa il risultato: è una scelta tipica della cronaca sportiva. Perché?",
-          "Individua le 5W nel primo paragrafo.",
-          "Come sono organizzate le informazioni: dal generale al particolare o viceversa?",
-          "La citazione del maestro aggiunge un commento: è un fatto o un'opinione?",
-          "L'ultimo paragrafo guarda al futuro: perché è utile in un articolo di cronaca?"
-        ]},
-      {id:"cron_s1",level:"secondaria",title:"Inaugurazione della nuova biblioteca",
-        text:`UNA NUOVA BIBLIOTECA PER LA CITTÀ: TAGLIO DEL NASTRO IN PIAZZA GARIBALDI\n\nÈ stata inaugurata sabato 8 febbraio la nuova biblioteca comunale di Orzinuovi, situata nell'edificio restaurato dell'ex municipio in Piazza Garibaldi. Alla cerimonia erano presenti il sindaco, l'assessore alla cultura e circa 150 cittadini.\n\nLa struttura, frutto di un progetto di riqualificazione costato 1,2 milioni di euro e finanziato in parte con fondi PNRR, ospita oltre 15.000 volumi, una sala studio da 40 posti, un'area bambini e una postazione multimediale.\n\n"Questa biblioteca non è solo un luogo di libri, ma un luogo di comunità," ha dichiarato il sindaco durante il discorso inaugurale. L'assessore ha aggiunto che nei prossimi mesi saranno attivati laboratori di lettura e incontri con autori.\n\nLa biblioteca sarà aperta dal lunedì al sabato, dalle 9:00 alle 19:00. L'ingresso è gratuito; per il prestito è necessaria la tessera, ottenibile con un documento d'identità.`,
-        questions:[
-          "Analizza il titolo: contiene un fatto e un dettaglio localizzativo. Perché questa struttura?",
-          "Il secondo paragrafo fornisce dati numerici: quale funzione hanno nella cronaca?",
-          "Le citazioni sono di due fonti diverse: perché il cronista sceglie di citarne due?",
-          "L'ultimo paragrafo è puramente informativo: che funzione ha per il lettore?",
-          "Confronta il registro di questo articolo con un racconto: trova tre differenze specifiche."
-        ]},
-      {id:"cron_s2",level:"secondaria",title:"La giornata dell'ambiente",
-        text:`GLI STUDENTI RIPULISCONO IL PARCO: 120 KG DI RIFIUTI RACCOLTI\n\nSono stati 120 i chilogrammi di rifiuti raccolti dagli studenti della scuola secondaria "Cerioli" durante la Giornata dell'Ambiente, svoltasi venerdì 22 marzo nel parco comunale.\n\nAll'iniziativa, promossa dal Comune in collaborazione con la scuola e l'associazione "Ambiente Pulito", hanno partecipato 85 ragazzi delle classi seconde e terze, accompagnati da sei insegnanti e dieci volontari dell'associazione.\n\nDivisi in squadre, gli studenti hanno setacciato il parco per tre ore, dalle 9:00 alle 12:00. I rifiuti più frequenti erano bottiglie di plastica, mozziconi di sigaretta e confezioni di cibo. Una squadra ha trovato anche un pneumatico abbandonato.\n\n"Non pensavo ci fosse così tanta spazzatura in un posto che sembra pulito," ha commentato Giulia, studentessa di terza. "È stato un po' disgustoso, ma anche utile. Ora guardo il parco in modo diverso."\n\nIl Comune ha annunciato che l'iniziativa sarà ripetuta ogni trimestre.`,
-        questions:[
-          "Il titolo contiene un dato numerico: perché è una scelta efficace?",
-          "Il lead condensa molte informazioni: individua le 5W.",
-          "Il terzo paragrafo entra nei dettagli operativi: perché la cronaca ha bisogno di questi particolari?",
-          "La citazione della studentessa è personale ed emotiva: è appropriata in un articolo di cronaca?",
-          "Come viene dato il senso di 'notizia' (importanza) a un evento scolastico?"
-        ]},
-      {id:"cron_s3",level:"secondaria",title:"Concerto di fine anno",
-        text:`MUSICA E APPLAUSI: IL CONCERTO DEGLI STUDENTI RIEMPIE L'AUDITORIUM\n\nL'auditorium della scuola "Sacra Famiglia" ha registrato il tutto esaurito venerdì sera per il concerto di fine anno scolastico. Oltre 250 spettatori hanno assistito all'esibizione dell'orchestra e del coro della scuola secondaria.\n\nIl programma, curato dal professor di musica Andrea Ferretti, comprendeva brani classici riarrangiati per ensemble scolastico e due composizioni originali scritte dagli studenti durante il laboratorio di composizione.\n\nL'esibizione è durata circa un'ora e mezza, con una pausa intermedia. Il momento più applaudito è stato il brano finale, eseguito dall'intera orchestra e dal coro insieme, che ha strappato una standing ovation.\n\n"Questi ragazzi hanno lavorato con impegno per mesi," ha dichiarato il professor Ferretti. "Stasera hanno dimostrato che la musica a scuola non è un accessorio, ma una forma di espressione fondamentale."\n\nIl prossimo appuntamento musicale è previsto per il concerto di Natale, a dicembre.`,
-        questions:[
-          "Il titolo usa due elementi: un dato emotivo e un dato fattuale. Individuali.",
-          "Come è strutturato l'articolo? Mappa i paragrafi e la loro funzione.",
-          "Il giornalista seleziona un 'momento clou': perché? Che funzione ha narrativa?",
-          "La citazione del professore contiene un'opinione forte: è giornalisticamente corretto inserirla?",
-          "Che cosa rende questo articolo diverso da un semplice resoconto?"
-        ]}
-    ]
-  }
+// ===================== LIBRARY =====================
+const LIBRARY={
+narrativo:{label:"Narrativo",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>',
+focusQuestions:[{label:"Punteggiatura",q:"Quali segni di punteggiatura usa l'autore oltre al punto? Che effetto producono?"},{label:"Lessico",q:"Trova 2-3 parole precise e non generiche. Perch\u00e9 quelle e non altre?"},{label:"Connettivi",q:"Individua i connettivi temporali e logici. Come guidano il lettore?"},{label:"Registro",q:"Il linguaggio \u00e8 formale, colloquiale o misto? Un esempio."}],
+checklist:[{group:"Struttura e coerenza",items:["Inizio, sviluppo e conclusione riconoscibili","Sequenza logica dei fatti","Punto di vista narrativo coerente"]},{group:"Lingua e lessico",items:["Parole precise, non generiche","Almeno 2-3 parole nuove o non banali","Connettivi temporali presenti e funzionali"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta (accenti, apostrofi, doppie, h)","Punteggiatura varia e consapevole","Maiuscole corrette"]},{group:"Efficacia comunicativa",items:["Il testo si fa leggere con piacere","Dettagli sensoriali presenti","Conclusione efficace"]}],
+models:[
+{id:"narr_p1",level:"primaria",title:"Il giorno della gita",text:"Quella mattina mi sono svegliato prima della sveglia. Lo zaino era gi\u00e0 pronto sul pavimento, con il pranzo al sacco e la bottiglietta d\u2019acqua.\n\nIn pullman ho trovato posto vicino al finestrino. Fuori i campi correvano veloci, poi sono arrivate le colline. Marco mi ha offerto una caramella alla menta, quella che pizzica la lingua.\n\nAl castello abbiamo seguito la guida lungo corridoi stretti e freddi. Ho toccato il muro: era umido e ruvido. In cima alla torre si vedeva tutto, anche il nostro pullman piccolo come un giocattolo.\n\nAl ritorno, sull\u2019autobus, nessuno parlava pi\u00f9. Eravamo stanchi e felici, con le scarpe piene di terra.",questions:["In quante parti \u00e8 diviso il racconto? Che succede in ciascuna?","Quali parole fanno capire che il tempo passa?","L'autore usa i cinque sensi: trovane almeno due esempi.","Come cambia lo stato d'animo dall'inizio alla fine?","Perch\u00e9 l'ultima frase \u00e8 efficace?"]},
+{id:"narr_p2",level:"primaria",title:"La scatola misteriosa",text:"Nel giardino della nonna, dietro il cespuglio di rose, c\u2019era una scatola di latta. Era coperta di terra e ruggine, con un disegno sbiadito sul coperchio.\n\nHo provato ad aprirla, ma era bloccata. Sono corso in garage a prendere un cacciavite. Le mani mi tremavano un po\u2019.\n\nDentro ho trovato una fotografia in bianco e nero: un bambino con le ginocchia sbucciate sorrideva davanti a questa stessa casa. Sul retro, una scritta: \u201cEstate 1962\u201d.\n\nHo portato la foto alla nonna. Lei l\u2019ha guardata a lungo, poi ha sorriso: \u201cQuello \u00e8 tuo nonno. Aveva la tua stessa faccia da avventuriero.\u201d",questions:["Qual \u00e8 l'evento che mette in moto la storia?","Come crea suspense l'autore?","Trova i dettagli descrittivi concreti.","Qual \u00e8 la sorpresa finale? Come \u00e8 collegata all'inizio?","Che funzione ha il dialogo nella chiusura?"]},
+{id:"narr_p3",level:"primaria",title:"Il temporale estivo",text:"Il cielo \u00e8 diventato viola in pochi minuti. Le rondini volavano basse, quasi a sfiorare l\u2019erba.\n\nLa nonna ha staccato la spina della televisione e ha chiuso le persiane. Io mi sono seduto sul divano con il cane, che tremava tutto.\n\nIl primo tuono \u00e8 stato cos\u00ec forte che ho sentito vibrare il pavimento. Poi la pioggia, tutta insieme, come se qualcuno avesse rovesciato un secchio gigante.\n\nDopo mezz\u2019ora \u00e8 tornato il sole. Il giardino brillava. C\u2019era un odore buono di terra bagnata e l\u2019arcobaleno tagliava il cielo in due.",questions:["Come \u00e8 organizzato il tempo? Prima, durante, dopo cosa?","Trova una similitudine: che effetto produce?","Quali sensi utilizza l'autore?","Come cambiano le emozioni?","L'ultimo paragrafo ha un tono diverso: perch\u00e9?"]},
+{id:"narr_s1",level:"secondaria",title:"L\u2019ultimo treno",text:"La stazione era quasi vuota. Solo un uomo con un cappotto grigio sedeva sulla panchina del binario 3, le mani strette intorno a un bicchiere di carta.\n\nIl tabellone lampeggiava: \u201cTreno 9247 \u2014 ritardo 35 minuti.\u201d Sara ha sospirato. Ogni minuto in pi\u00f9 in quella stazione era un minuto in meno di coraggio.\n\nAveva deciso di partire quella mattina, mentre lavava i piatti. Una decisione improvvisa e chiarissima, come quando il ghiaccio si rompe sotto il peso. Aveva riempito una valigia, non troppo grande, e aveva lasciato le chiavi sul tavolo della cucina.\n\nQuando finalmente il treno \u00e8 arrivato, le porte si sono aperte con un soffio. Sara \u00e8 salita senza voltarsi. Dal finestrino, la stazione si \u00e8 rimpicciolita, poi \u00e8 scomparsa. Ha appoggiato la fronte sul vetro freddo e ha sorriso, per la prima volta in settimane.",questions:["Il racconto mescola presente e flashback: dove avviene il passaggio?","Che funzione ha la similitudine del ghiaccio?","Come contribuisce l'ambientazione allo stato d'animo?","Quali dettagli comunicano la decisione senza dirla?","Che effetto produce il sorriso finale?"]},
+{id:"narr_s2",level:"secondaria",title:"La lettera nel cassetto",text:"Ho trovato la lettera mentre cercavo le forbici. Era in fondo al secondo cassetto della scrivania di mio padre, sotto una busta di foto e un vecchio righello di legno.\n\nLa busta era aperta, la carta ingiallita. La calligrafia era ordinata ma piccola, come di chi scrive in fretta e non vuole sprecare spazio. Iniziava con \u201cCaro Marco\u201d \u2014 il nome di mio padre \u2014 e finiva con \u201cil tuo amico di sempre, Enrico\u201d.\n\nEnrico parlava di un viaggio in bicicletta che avevano fatto da ragazzi, di un temporale che li aveva sorpresi, di una notte passata in un fienile a raccontarsi il futuro. \u201cTu dicevi che avresti fatto il pilota,\u201d scriveva. \u201cIo volevo diventare cuoco. Ci siamo sbagliati tutti e due, ma forse \u00e8 andata meglio cos\u00ec.\u201d\n\nHo rimesso la lettera al suo posto, sotto le foto e il righello. Ma per il resto della giornata ho guardato mio padre in modo diverso, come si guarda una persona che ha avuto una vita prima di te.",questions:["Cornice e contenuto: come interagiscono?","Perch\u00e9 descrivere la posizione esatta della lettera?","Che tono ha Enrico? Da quali scelte lo capisci?","Come cambia la percezione verso il padre?","L'ultima frase: che significa esattamente?"]},
+{id:"narr_s3",level:"secondaria",title:"Cinque minuti",text:"Il professor Mancini aveva una regola: se arrivavi in ritardo di pi\u00f9 di cinque minuti, non entravi. Non c\u2019era appello, non c\u2019era scusa.\n\nQuel luned\u00ec mi sono svegliato alle 7:42. La sveglia non era suonata, o forse l\u2019avevo spenta nel sonno. Ho fatto le scale di corsa, con la maglia al contrario e lo zaino aperto.\n\nAlla fermata del bus, il display segnava tre minuti. Ho contato ogni secondo. Il bus \u00e8 arrivato con due minuti di ritardo. Ho corso dal cancello all\u2019aula.\n\nSono entrato ansimando. Mancini ha guardato l\u2019orologio sopra la lavagna, poi me. Ho sentito il cuore nelle orecchie.\n\n\u201cQuattro minuti e cinquanta secondi,\u201d ha detto. Poi ha indicato il mio posto con il mento.\n\nMi sono seduto. Solo allora ho notato che avevo due scarpe diverse.",questions:["Come crea tensione? Almeno tre tecniche.","Che ruolo ha il tempo nella struttura?","Il finale \u00e8 comico: come funziona il contrasto?","La frase del professore: che effetto ha il discorso diretto?","Che tipo di narratore \u00e8? Vantaggi?"]}
+]},
+descrittivo:{label:"Descrittivo",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+focusQuestions:[{label:"Aggettivi",q:"Trova 3 aggettivi. Sono precisi o generici? Prova a sostituirli."},{label:"Sensi",q:"Quali sensi usa l'autore? Un esempio per ciascuno."},{label:"Figure retoriche",q:"Similitudini o metafore? Riscrivile con parole tue."},{label:"Punteggiatura",q:"Due punti, punto e virgola, puntini? Dove e con quale effetto?"}],
+checklist:[{group:"Struttura e ordine",items:["Ordine logico (spaziale, temporale, generale\u2192particolare)","Paragrafi con un 'fuoco' ciascuno","Il lettore si orienta nella scena"]},{group:"Lingua e lessico",items:["Aggettivi precisi","Almeno 3 riferimenti sensoriali","Similitudini/metafore efficaci"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta","Punteggiatura varia e consapevole","Maiuscole corrette"]},{group:"Efficacia comunicativa",items:["Il lettore 'vede' la scena","Tono coerente col modello","Atmosfera, non elenco"]}],
+models:[
+{id:"desc_p1",level:"primaria",title:"Il mercato del sabato",text:"Il mercato del sabato occupa tutta la piazza. I banchi sono uno accanto all\u2019altro, con i teloni colorati che fanno ombra.\n\nVicino all\u2019ingresso c\u2019\u00e8 il banco della frutta. Le mele sono impilate in piramidi perfette, rosse e lucide. Accanto, le arance profumano cos\u00ec tanto che le senti a tre passi di distanza.\n\nPi\u00f9 avanti, il banco del formaggio. Il signore con il grembiule bianco taglia fette con un filo sottile. L\u2019odore \u00e8 forte, un po\u2019 pungente.\n\nIn fondo alla piazza c\u2019\u00e8 la bancarella dei giocattoli usati. Un trenino di legno con la vernice scrostata, un puzzle con la scatola rotta, soldatini senza un braccio. Sono vecchi, ma qualcuno li compra sempre.",questions:["In che ordine \u00e8 organizzata la descrizione?","Un esempio per ciascun senso usato.","Aggettivi precisi: quali e perch\u00e9?","L'ultimo paragrafo ha tono diverso: quale?","Aggiungi un suono: quale e dove?"]},
+{id:"desc_p2",level:"primaria",title:"La mia stanza al mattino",text:"La mia stanza al mattino \u00e8 un posto tranquillo. La luce entra dalla finestra e disegna un rettangolo chiaro sul pavimento.\n\nIl letto \u00e8 ancora sfatto, con il cuscino che ha ancora la forma della mia testa. Sul comodino c\u2019\u00e8 il bicchiere d\u2019acqua di ieri sera, mezzo pieno.\n\nLa scrivania \u00e8 il posto meno ordinato: fogli, matite, un astuccio aperto. Il quaderno di matematica \u00e8 rimasto aperto alla pagina delle frazioni.\n\nSul muro, sopra il letto, ci sono le cartoline delle vacanze. Quella del mare \u00e8 la pi\u00f9 sbiadita, perch\u00e9 \u00e8 l\u00ec da tre anni.",questions:["Percorso dello sguardo: da dove a dove?","Dettagli che dicono 'mattina presto'?","Un particolare che racconta il carattere?","Frasi brevi: che effetto?","Perch\u00e9 dire che la cartolina \u00e8 sbiadita?"]},
+{id:"desc_p3",level:"primaria",title:"Il cane del vicino",text:"Il cane del vicino si chiama Briciola, ma di briciola non ha niente. \u00c8 grosso, con il pelo marrone e folto, e le zampe larghe come piattini.\n\nQuando mi vede, comincia a scodinzolare cos\u00ec forte che tutto il corpo si muove. La coda sembra un tergicristallo impazzito.\n\nHa il muso quadrato e gli occhi scuri, sempre un po\u2019 tristi anche quando \u00e8 contento. Sotto il mento ha una macchia bianca a forma di stella.\n\nDi solito sta sdraiato davanti al cancello, con il muso appoggiato sulle zampe. Ogni tanto alza la testa per controllare chi passa, poi torna a dormire. La sua giornata \u00e8 fatta cos\u00ec.",questions:["Dal generale ai dettagli o viceversa?","Le due similitudini: effetto?","Dettagli che danno personalit\u00e0 a Briciola?","L'ultima frase: che tono?","Come rende simpatico senza dire 'simpatico'?"]},
+{id:"desc_s1",level:"secondaria",title:"L\u2019alba sul lago",text:"Alle cinque del mattino il lago non ha colore. \u00c8 una superficie piatta e grigia, indistinguibile dal cielo che la sovrasta. L\u2019unico suono \u00e8 quello dell\u2019acqua che tocca i sassi sulla riva, un rumore piccolo e regolare, come un respiro.\n\nPoi la luce comincia a lavorare. Prima un chiarore diffuso, senza direzione, che sbiadisce le stelle. Poi una striscia arancione all\u2019orizzonte, sottile come un taglio. Il lago la cattura e la allunga, raddoppiandola.\n\nIn pochi minuti i colori si moltiplicano: rosa, oro, azzurro. Le montagne escono dall\u2019ombra una alla volta, come sagome in un teatro di carta. Un airone si stacca dalla riva e vola rasente all\u2019acqua, spezzando il riflesso.\n\nAlle sei il lago \u00e8 tornato ad essere semplicemente un lago. Ma per un\u2019ora, all\u2019alba, \u00e8 stato qualcosa di pi\u00f9.",questions:["Marcatori temporali: individuali.","La luce come filo conduttore?","Due similitudini: effetto.","L'ultima frase: giudizio implicito?","L'airone: ruolo strutturale?"]},
+{id:"desc_s2",level:"secondaria",title:"La biblioteca comunale",text:"La biblioteca comunale \u00e8 al secondo piano di un palazzo ottocentesco con le pareti scrostate e un portone che cigola. La scala di marmo ha i gradini consumati al centro, dove migliaia di piedi li hanno levigati.\n\nAll\u2019ingresso l\u2019odore cambia. L\u2019aria diventa secca, un misto di carta vecchia, legno e qualcosa di dolciastro, come vaniglia. \u00c8 l\u2019odore dei libri che invecchiano, dicono.\n\nLa sala principale ha il soffitto alto, con una finestra ovale che proietta un cerchio di luce sul pavimento. Gli scaffali di legno scuro arrivano fin quasi al soffitto. Per raggiungere i ripiani pi\u00f9 alti c\u2019\u00e8 una scala a pioli che scorre su un binario di ottone.\n\nIl silenzio non \u00e8 mai totale: c\u2019\u00e8 sempre il fruscio di una pagina, il ticchettio di una tastiera, il rumore soffocato di una sedia che viene spostata. Ma \u00e8 un silenzio pieno, non vuoto.",questions:["Percorso fisico della descrizione?","Come scompone l'odore?","'Silenzio pieno': come rende concreta un'astrazione?","Dettagli di antichit\u00e0 e uso?","Tono complessivo: giustifica."]}
+]},
+argomentativo:{label:"Argomentativo",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+focusQuestions:[{label:"Connettivi logici",q:"Individua i connettivi (perch\u00e9, infatti, tuttavia, quindi...). Funzione di ciascuno?"},{label:"Registro",q:"Formale o informale? 2 scelte che lo dimostrano."},{label:"Lessico argomentativo",q:"Parole 'forti' (innegabile, fondamentale...)? Quali?"},{label:"Punteggiatura retorica",q:"Due punti, punto e virgola, trattini per organizzare il ragionamento? Dove?"}],
+checklist:[{group:"Struttura argomentativa",items:["Tesi chiaramente espressa","Almeno due argomenti a sostegno","Obiezione o punto di vista contrario","Conclusione che riprende la tesi"]},{group:"Lingua e lessico",items:["Connettivi logici corretti e vari","Lessico appropriato","Registro coerente"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta","Punteggiatura che organizza il ragionamento","Maiuscole corrette"]},{group:"Efficacia comunicativa",items:["Il testo convince o fa riflettere","Ragionamento chiaro","La posizione dell'autore \u00e8 comprensibile"]}],
+models:[
+{id:"arg_p1",level:"primaria",title:"Perch\u00e9 \u00e8 importante leggere",text:"Leggere \u00e8 importante, e non solo perch\u00e9 lo dicono i grandi. Leggere serve davvero, e vi spiego perch\u00e9.\n\nPrima di tutto, leggendo si imparano parole nuove. Chi legge ha pi\u00f9 parole a disposizione, e chi ha pi\u00f9 parole riesce a spiegare meglio quello che pensa.\n\nInoltre, leggere allena il cervello. \u00c8 come la ginnastica, ma per la mente: bisogna immaginare, ricordare, collegare le cose tra loro.\n\nQualcuno dice che leggere \u00e8 noioso. \u00c8 vero che non tutti i libri sono interessanti, ma questo vale anche per i film e i videogiochi. La soluzione non \u00e8 smettere di leggere, ma trovare il libro giusto.\n\nIn conclusione, leggere ci rende pi\u00f9 capaci, pi\u00f9 curiosi e pi\u00f9 liberi. E un libro non ha mai bisogno di essere ricaricato.",questions:["Qual \u00e8 la tesi? In quale frase?","Quanti argomenti a sostegno? Elencali.","L'obiezione: dove? Come viene risposto?","Parole che collegano le parti?","La battuta finale: che funzione ha?"]},
+{id:"arg_p2",level:"primaria",title:"Gli animali in classe",text:"Nella nostra scuola non \u00e8 permesso portare animali. Io penso che dovrebbe essere permesso, almeno un animale per classe, e voglio spiegare le mie ragioni.\n\nPrendersi cura di un animale insegna la responsabilit\u00e0. Bisogna ricordarsi di dargli da mangiare, pulire, osservare se sta bene. Sono cose che non si imparano solo dai libri.\n\nIn pi\u00f9, molte ricerche dicono che avere un animale vicino riduce lo stress. E a scuola, specialmente nei giorni delle verifiche, un po\u2019 di calma farebbe bene a tutti.\n\n\u00c8 vero che ci sono problemi pratici: le allergie, il rumore, la pulizia. Ma si possono scegliere animali adatti, come le tartarughe o i pesci, che non creano questi problemi.\n\nQuindi, con le giuste precauzioni, un animale in classe sarebbe un\u2019esperienza educativa importante.",questions:["Dove la tesi? Inizio o fine?","Due vantaggi: quali? Come introdotti?","Come affronta le obiezioni?","'Quindi' nell'ultima frase: ruolo?","Convince? Perch\u00e9 s\u00ec o no?"]},
+{id:"arg_s1",level:"secondaria",title:"Smartphone a scuola",text:"La questione dello smartphone a scuola divide insegnanti, genitori e studenti. Dopo averci riflettuto, credo che lo smartphone debba essere ammesso, ma con regole precise.\n\nIl primo motivo \u00e8 pratico: lo smartphone \u00e8 uno strumento potente. Con esso si possono consultare dizionari, fare ricerche, documentare esperimenti. Vietarlo significa rinunciare a un\u2019opportunit\u00e0 didattica.\n\nIl secondo motivo \u00e8 educativo: se la scuola vuole insegnare a vivere nel mondo, deve insegnare anche a usare la tecnologia. Vietare non educa; semmai, rimanda il problema.\n\nTuttavia, \u00e8 innegabile che lo smartphone sia fonte di distrazione e dipendenza. Chi si oppone ha ragioni legittime.\n\nLa soluzione non \u00e8 il divieto totale, ma l\u2019uso regolamentato: momenti precisi, regole condivise, conseguenze chiare.\n\nIn sintesi, la scuola dovrebbe insegnare a usare lo smartphone, non a nasconderlo.",questions:["Tesi netta o sfumata? Dove espressa e ripresa?","Motivo 'pratico' e 'educativo': perch\u00e9 distinguerli?","Posizione contraria: come trattata?","Connettivi logici e funzione di ciascuno.","L'ultima frase: tecnica retorica?"]},
+{id:"arg_s2",level:"secondaria",title:"Il volontariato obbligatorio",text:"In molte scuole europee il volontariato \u00e8 obbligatorio. In Italia se ne discute. Io penso che rendere il volontariato obbligatorio sia un errore, anche se con buone intenzioni.\n\nIl volontariato ha valore perch\u00e9 \u00e8 una scelta libera. Costringere qualcuno ad aiutare gli altri toglie il significato pi\u00f9 profondo: la gratuit\u00e0. Un volontario obbligato \u00e8 una contraddizione.\n\nInoltre, l\u2019obbligo rischia di trasformare un\u2019esperienza formativa in un compito burocratico. Se devo \u201cfare le ore\u201d, il mio obiettivo diventa completare un numero, non comprendere un bisogno.\n\nD\u2019altro canto, chi sostiene l\u2019obbligo ha un punto valido: senza una spinta iniziale, molti ragazzi non proverebbero mai.\n\nLa mia proposta: non obbligo, ma opportunit\u00e0 strutturata. Esperienze ben organizzate, attraenti, non imposte.\n\nLa vera educazione alla solidariet\u00e0 nasce dalla libert\u00e0, non dall\u2019obbligo.",questions:["Mappa: tesi, argomenti, obiezione, proposta, conclusione.","'Contraddizione': argomento logico o emotivo?","Come tratta la posizione opposta?","'Obbligo' vs 'opportunit\u00e0 strutturata': il cuore del testo?","Tre scelte che dimostrano registro formale ma accessibile."]},
+{id:"arg_s3",level:"secondaria",title:"Social network e amicizia",text:"Si dice spesso che i social network rovinano le amicizie. Io credo che questa affermazione sia troppo semplice, e che la realt\u00e0 sia pi\u00f9 sfumata.\n\n\u00c8 vero che i social possono creare relazioni superficiali. Avere trecento \u201camici\u201d online non significa avere trecento amici veri. Il rischio di confondere popolarit\u00e0 con amicizia esiste.\n\nTuttavia, i social permettono di mantenere relazioni che altrimenti si perderebbero. Un compagno che cambia scuola, un cugino lontano: senza i social, molti legami si spezzerebbero.\n\nInoltre, per chi \u00e8 timido, lo spazio digitale pu\u00f2 essere un primo passo per aprirsi.\n\nIl problema non \u00e8 lo strumento, ma come lo si usa.\n\nLa domanda giusta non \u00e8 \u201ci social rovinano le amicizie?\u201d ma \u201cio come uso i social nelle mie amicizie?\u201d",questions:["Tesi sfumata: perch\u00e9?","Argomentazioni pro e contro: quante?","L'ultima frase ribalta la domanda: effetto?","Connettivi avversativi e funzione.","Prima persona: efficace per argomentare?"]}
+]},
+lettera:{label:"Lettera",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+focusQuestions:[{label:"Formule",q:"Formule di apertura e chiusura: adeguate al destinatario?"},{label:"Tu o Lei?",q:"Tu o Lei? Coerente per tutto il testo?"},{label:"Lessico epistolare",q:"Espressioni tipiche (caro, distinti saluti, le scrivo per...)?"},{label:"Punteggiatura",q:"Due punti, virgole, esclamativi: che tono creano?"}],
+checklist:[{group:"Struttura epistolare",items:["Elementi formali completi (data, destinatario, apertura, chiusura, firma)","Scopo chiaro dal primo paragrafo","Paragrafi logici"]},{group:"Lingua e registro",items:["Registro adeguato (tu/Lei)","Lessico appropriato alla situazione","Formule coerenti col tono"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta","Punteggiatura curata","Maiuscole corrette (anche Lei di cortesia)"]},{group:"Efficacia comunicativa",items:["Il destinatario capirebbe lo scopo","Tono rispettoso e appropriato","Rapporto col destinatario mantenuto"]}],
+models:[
+{id:"let_p1",level:"primaria",title:"Lettera a un amico lontano",text:"Orzinuovi, 15 marzo 2026\n\nCaro Luca,\n\n\u00e8 passato tanto tempo dall\u2019ultima volta che ci siamo visti! Mi manchi, soprattutto quando in classe facciamo qualcosa di divertente e penso: \u201cLuca qui si sarebbe divertito un sacco.\u201d\n\nTi racconto una cosa bella: la settimana scorsa abbiamo fatto un laboratorio di scienze con i vulcani. Abbiamo usato aceto e bicarbonato e il vulcano ha \u201ceruttato\u201d davvero! Il mio gruppo ha fatto quello pi\u00f9 alto di tutti.\n\nCome stai nella scuola nuova? Hai trovato dei compagni simpatici? Spero che ti trovi bene, ma sappi che qui il tuo banco \u00e8 ancora vicino al mio.\n\nScrivimi quando puoi!\n\nIl tuo amico,\nMarco",questions:["Parti formali: elencale.","Tono: da cosa lo capisci?","L'episodio: perch\u00e9? Che funzione?","Frasi che mostrano affetto?","'Il tuo banco \u00e8 ancora vicino al mio': perch\u00e9 potente?"]},
+{id:"let_p2",level:"primaria",title:"Lettera alla maestra",text:"Orzinuovi, 20 giugno 2026\n\nCara maestra Giulia,\n\nvolevo scriverle per dirle grazie, adesso che la quinta \u00e8 finita e noi andiamo alle medie.\n\nGrazie per la pazienza che ha avuto con me, soprattutto in matematica. All\u2019inizio le frazioni mi facevano venire il mal di testa, ma lei me le ha spiegate con le pizze e alla fine ho capito.\n\nMi ricorder\u00f2 sempre del giorno in cui abbiamo letto la storia del Piccolo Principe. Lei ci ha chiesto: \u201cChe cosa vedete voi quando guardate una scatola?\u201d E nessuno ha risposto \u201cuna scatola\u201d. Quello \u00e8 stato il giorno in cui ho capito che a scuola si impara a guardare meglio.\n\nLe auguro una buona estate. Mi mancher\u00e0.\n\nCon affetto,\nElena",questions:["Registro: formale o informale? Il 'Lei'?","Ringraziare con episodi: perch\u00e9 pi\u00f9 efficace?","Episodio pi\u00f9 significativo: perch\u00e9 alla fine?","Immagine della maestra che emerge?","Chiusura breve ma efficace: perch\u00e9?"]},
+{id:"let_s1",level:"secondaria",title:"Lettera al sindaco",text:"Orzinuovi, 10 aprile 2026\n\nEgregio Signor Sindaco,\n\nmi chiamo Sara Conti, ho 13 anni e frequento la scuola secondaria di primo grado. Le scrivo per segnalare un problema che riguarda la pista ciclabile di via Roma.\n\nDa alcune settimane la pista \u00e8 in condizioni pessime: l\u2019asfalto \u00e8 rovinato in pi\u00f9 punti, la segnaletica \u00e8 sbiadita e in due tratti le radici degli alberi hanno sollevato il terreno creando dossi pericolosi. Io la percorro ogni mattina e devo spesso spostarmi sulla strada.\n\nChiedo cortesemente che il Comune valuti un intervento di manutenzione. Una pista sicura incoraggia l\u2019uso della bicicletta e riduce il traffico.\n\nResto a disposizione e ringrazio per l\u2019attenzione.\n\nDistinti saluti,\nSara Conti",questions:["Convenzioni formali rispettate?","Tono rispettoso ma fermo: come?","Segnalazione concreta: perch\u00e9 strategico?","Argomento nel terzo paragrafo: quale?","Confronta con la lettera all'amico: 3 differenze."]},
+{id:"let_s2",level:"secondaria",title:"Lettera a Leonardo da Vinci",text:"21 ottobre 2026\n\nCaro Leonardo,\n\nle scrivo dal futuro, pi\u00f9 di cinquecento anni dopo la sua epoca. Mi chiamo Alessio, ho dodici anni e frequento una scuola nel nord Italia.\n\nHo studiato i suoi codici e i suoi disegni, e la cosa che mi ha colpito di pi\u00f9 non sono le macchine volanti, ma il modo in cui lei guardava le cose. Lei disegnava l\u2019acqua per capire come si muove. Apriva gli animali per capire come funzionano. Studiava le ombre per capire la luce.\n\nOggi abbiamo strumenti che lei non poteva immaginare: computer, fotografie, simulazioni. Eppure molti di noi guardano senza vedere. Credo che il suo insegnamento pi\u00f9 grande non sia un\u2019invenzione, ma un metodo: osservare con attenzione prima di concludere.\n\nSe potesse vedere il mondo di oggi, troverebbe mille cose da disegnare nel suo taccuino.\n\nCon ammirazione,\nAlessio",questions:["Formale e personale insieme: come?","Tesi di Alessio: dove espressa?","Struttura a tre nel secondo paragrafo?","Confronto passato/presente: come costruito?","Immagine concreta in chiusura: perch\u00e9 efficace?"]},
+{id:"let_s3",level:"secondaria",title:"Lettera di reclamo",text:"Brescia, 5 novembre 2026\n\nSpett.le Direzione del Ristorante \u201cLa Quercia\u201d,\n\nvi scrivo in merito alla cena del 2 novembre scorso, durante la quale si sono verificati alcuni disagi.\n\nIl nostro tavolo, prenotato per le 20:00, \u00e8 stato assegnato solo alle 20:35, senza spiegazione. Una volta seduti, l\u2019attesa per le ordinazioni \u00e8 stata di ulteriori venti minuti.\n\nIl piatto principale (tagliata di manzo con rucola) \u00e8 arrivato freddo. Ho segnalato il problema al cameriere, che si \u00e8 scusato ma non ha proposto soluzione.\n\nIl conto, nonostante i disservizi, era completo e senza sconto.\n\nNon scrivo per polemica, ma perch\u00e9 in passato ho apprezzato il vostro locale e mi dispiacerebbe non tornarci. Confido in un riscontro.\n\nCordiali saluti,\nMarco Bianchi",questions:["Struttura: paragrafi e funzione di ciascuno?","Fermo ma non aggressivo: scelte?","Date, orari, piatti: perch\u00e9?","Il penultimo paragrafo cambia: come?","Confronta con lettera al sindaco: cosa in comune?"]}
+]},
+cronaca:{label:"Cronaca",icon:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2z"/></svg>',
+focusQuestions:[{label:"Le 5W",q:"Nel primo paragrafo: Chi? Che cosa? Quando? Dove? Perch\u00e9?"},{label:"Fatto vs opinione",q:"Una frase oggettiva e una con opinione: come le distingui?"},{label:"Citazioni",q:"Chi viene citato? Perch\u00e9 proprio quella persona?"},{label:"Lessico giornalistico",q:"2-3 espressioni tipiche (si \u00e8 svolta, ha dichiarato...). Si usano nel parlato?"}],
+checklist:[{group:"Struttura giornalistica",items:["Titolo informativo","Lead con le 5W","Fatti in ordine logico/cronologico","Chiusura prospettica"]},{group:"Lingua e registro",items:["Registro oggettivo","Fonti citate correttamente","Lessico preciso e giornalistico"]},{group:"Ortografia e punteggiatura",items:["Ortografia corretta","Virgolette per citazioni, due punti per elenchi","Maiuscole per nomi propri e istituzioni"]},{group:"Efficacia comunicativa",items:["Il lettore capisce subito il tema","Informazioni complete ma non ridondanti","Articolo credibile"]}],
+models:[
+{id:"cron_p1",level:"primaria",title:"La festa della scuola",text:"GRANDE SUCCESSO PER LA FESTA DI FINE ANNO\n\nVenerd\u00ec 6 giugno si \u00e8 svolta la festa di fine anno della scuola primaria \u201cG. Rodari\u201d di Orzinuovi. L\u2019evento, organizzato dai genitori e dagli insegnanti, ha coinvolto circa 200 persone.\n\nLa festa \u00e8 iniziata alle 17:00 nel cortile con l\u2019esibizione del coro. Poi ogni classe ha presentato un breve spettacolo: la terza ha recitato una poesia, la quarta ha messo in scena uno sketch.\n\nIl momento pi\u00f9 atteso \u00e8 stato il gioco a squadre, dove i genitori hanno sfidato i figli in una staffetta con i sacchi. Hanno vinto i bambini.\n\n\u201c\u00c8 stata una giornata bellissima,\u201d ha detto la maestra Carla. \u201cI bambini erano emozionati e orgogliosi.\u201d\n\nLa festa si \u00e8 conclusa alle 20:00 con una merenda condivisa.",questions:["Il titolo: funzione?","5W nel primo paragrafo: trovale.","Ordine cronologico: ricostruisci.","Citazione: chi parla? Perch\u00e9?","Diverso da un racconto: in cosa?"]},
+{id:"cron_p2",level:"primaria",title:"Torneo di minivolley",text:"TORNEO DI MINIVOLLEY: VINCE LA QUARTA B\n\nMercoled\u00ec 12 marzo, nella palestra della scuola \u201cSacra Famiglia\u201d, si \u00e8 svolto il torneo di minivolley tra le classi quarte. Hanno partecipato quattro squadre.\n\nLe partite sono durate tutta la mattina, dalle 9:00 alle 12:30. La semifinale pi\u00f9 combattuta \u00e8 stata tra 4A e 4C, terminata ai vantaggi.\n\nIn finale la 4B ha vinto 2 set a 1, grazie ai servizi di Martina e alla difesa di Tommaso.\n\nL\u2019insegnante ha commentato: \u201cTutte le squadre hanno giocato con fair play. Il risultato conta, ma lo spirito sportivo conta di pi\u00f9.\u201d\n\nIl prossimo torneo, di pallacanestro, si terr\u00e0 a maggio.",questions:["Titolo con risultato: perch\u00e9?","5W nel primo paragrafo.","Organizzazione delle informazioni?","La citazione: fatto o opinione?","Ultimo paragrafo al futuro: perch\u00e9?"]},
+{id:"cron_s1",level:"secondaria",title:"Nuova biblioteca",text:"NUOVA BIBLIOTECA: TAGLIO DEL NASTRO IN PIAZZA GARIBALDI\n\n\u00c8 stata inaugurata sabato 8 febbraio la nuova biblioteca comunale di Orzinuovi, nell\u2019ex municipio in Piazza Garibaldi. Presenti il sindaco, l\u2019assessore alla cultura e circa 150 cittadini.\n\nLa struttura, costata 1,2 milioni di euro e finanziata con fondi PNRR, ospita 15.000 volumi, una sala studio da 40 posti, un\u2019area bambini e una postazione multimediale.\n\n\u201cQuesta biblioteca non \u00e8 solo un luogo di libri, ma di comunit\u00e0,\u201d ha dichiarato il sindaco. L\u2019assessore ha aggiunto che saranno attivati laboratori e incontri con autori.\n\nAperta dal luned\u00ec al sabato, 9:00-19:00. Ingresso gratuito; per il prestito serve la tessera.",questions:["Titolo: fatto + localizzazione. Perch\u00e9?","Dati numerici: funzione?","Due fonti citate: perch\u00e9?","Ultimo paragrafo informativo: funzione?","Confronta con un racconto: 3 differenze."]},
+{id:"cron_s2",level:"secondaria",title:"Giornata dell\u2019ambiente",text:"120 KG DI RIFIUTI: GLI STUDENTI RIPULISCONO IL PARCO\n\nSono stati 120 i chilogrammi di rifiuti raccolti dagli studenti della scuola \u201cCerioli\u201d durante la Giornata dell\u2019Ambiente, venerd\u00ec 22 marzo, nel parco comunale.\n\nAll\u2019iniziativa hanno partecipato 85 ragazzi delle seconde e terze, accompagnati da sei insegnanti e dieci volontari dell\u2019associazione \u201cAmbiente Pulito\u201d.\n\nDivisi in squadre, hanno setacciato il parco per tre ore. I rifiuti pi\u00f9 frequenti: bottiglie di plastica, mozziconi e confezioni. Una squadra ha trovato un pneumatico.\n\n\u201cNon pensavo ci fosse cos\u00ec tanta spazzatura in un posto che sembra pulito,\u201d ha commentato Giulia, studentessa di terza.\n\nIl Comune ha annunciato che l\u2019iniziativa sar\u00e0 ripetuta ogni trimestre.",questions:["Dato numerico nel titolo: perch\u00e9?","5W nel lead.","Dettagli operativi: perch\u00e9 servono?","Citazione personale in cronaca: appropriata?","Come si d\u00e0 importanza a un evento scolastico?"]},
+{id:"cron_s3",level:"secondaria",title:"Concerto di fine anno",text:"MUSICA E APPLAUSI: L\u2019AUDITORIUM TUTTO ESAURITO\n\nL\u2019auditorium della \u201cSacra Famiglia\u201d ha registrato il tutto esaurito venerd\u00ec sera per il concerto di fine anno. Oltre 250 spettatori hanno assistito all\u2019esibizione dell\u2019orchestra e del coro.\n\nIl programma comprendeva brani classici riarrangiati e due composizioni originali scritte dagli studenti nel laboratorio.\n\nIl momento pi\u00f9 applaudito \u00e8 stato il brano finale, eseguito da orchestra e coro insieme, che ha ottenuto una standing ovation.\n\n\u201cQuesti ragazzi hanno lavorato per mesi,\u201d ha dichiarato il professore di musica. \u201cLa musica a scuola non \u00e8 un accessorio.\u201d\n\nProssimo appuntamento: il concerto di Natale.",questions:["Titolo: emotivo + fattuale. Individuali.","Struttura: mappa i paragrafi.","'Momento clou': perch\u00e9 sceglierlo?","Opinione nella citazione: corretto?","Diverso da un resoconto: perch\u00e9?"]}
+]}
 };
 
-// ===================== APP STATE =====================
-let state = {
-  type: null,
-  level: null,
-  model: null,
-  micActive: false,
-  phase: 'select', // select, osserva, analizza, scrivi, confronta
-  startTime: null,
-  obsTimerInterval: null,
-  writeTimerInterval: null,
-  writeStartTime: null,
-  obsMinTime: 0,
-  obsElapsed: 0,
-  answers: {},
-  checkValues: {},
-  violations: [],
-  violationCount: 0,
-  clickTimestamps: [],
-  noiseHistory: [],
-  avgNoise: 0,
-  noiseExceedStart: null,
-  PIN: '1234'
-};
+// ===================== STATE =====================
+const S={type:null,level:null,model:null,phase:'select',startTime:null,obsInterval:null,sessionInterval:null,
+  obsMinTime:0,obsElapsed:0,answers:{},focusAnswers:{},checkValues:{},
+  violations:[],violationCount:0,clickTimestamps:[],
+  noiseHistory:[],avgNoise:0,sentencesLost:0,
+  noiseFadeState:0,noiseFadeTimer:null,noiseHighStart:null,
+  PIN:'1234'};
 
 // ===================== INIT =====================
-function init() {
-  const grid = document.getElementById('type-grid');
-  Object.keys(LIBRARY).forEach(key => {
-    const t = LIBRARY[key];
-    const btn = document.createElement('button');
-    btn.className = 'type-btn';
-    btn.innerHTML = `<span class="icon">${t.icon}</span>${t.label}`;
-    btn.onclick = () => pickType(key, btn);
-    grid.appendChild(btn);
-  });
+function init(){
+  const g=document.getElementById('type-grid');
+  Object.keys(LIBRARY).forEach(k=>{const t=LIBRARY[k];const b=document.createElement('button');b.className='type-btn';b.innerHTML=`<span class="icon">${t.icon}</span>${t.label}`;b.onclick=()=>pickType(k,b);g.appendChild(b);});
+  const bars=document.getElementById('noise-bars');for(let i=0;i<20;i++){const d=document.createElement('div');d.className='noise-bar';bars.appendChild(d);}
+  // Word count listener
+  document.getElementById('write-area').addEventListener('input',updateWordCount);
 }
-
-function pickType(key, btn) {
-  state.type = key;
-  state.level = null;
-  state.model = null;
-  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  document.getElementById('level-card').style.display = 'block';
-  document.getElementById('model-card').style.display = 'none';
-  document.getElementById('start-row').style.display = 'none';
-  document.getElementById('mic-prompt').style.display = 'none';
-  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
-}
-
-function pickLevel(level) {
-  state.level = level;
-  state.model = null;
-  document.querySelectorAll('.level-btn').forEach(b => {
-    b.classList.toggle('selected', b.textContent.toLowerCase().includes(level));
-  });
-  renderModels();
-  document.getElementById('model-card').style.display = 'block';
-  document.getElementById('start-row').style.display = 'none';
-  document.getElementById('mic-prompt').style.display = 'none';
-}
-
-function renderModels() {
-  const list = document.getElementById('model-list');
-  list.innerHTML = '';
-  const models = LIBRARY[state.type].models.filter(m => m.level === state.level);
-  models.forEach(m => {
-    const div = document.createElement('div');
-    div.className = 'model-item';
-    div.innerHTML = `<div class="title">${m.title}</div><div class="meta">${m.text.split(/\s+/).length} parole</div>`;
-    div.onclick = () => {
-      state.model = m;
-      document.querySelectorAll('.model-item').forEach(d => d.classList.remove('selected'));
-      div.classList.add('selected');
-      document.getElementById('mic-prompt').style.display = 'flex';
-      document.getElementById('start-row').style.display = 'flex';
-    };
-    list.appendChild(div);
-  });
-}
+function pickType(k,btn){S.type=k;S.level=null;S.model=null;document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');document.getElementById('level-card').style.display='block';document.getElementById('model-card').style.display='none';document.getElementById('start-row').style.display='none';document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('selected'));}
+function pickLevel(lv){S.level=lv;S.model=null;document.querySelectorAll('.level-btn').forEach(b=>b.classList.toggle('selected',b.textContent.toLowerCase().includes(lv)));renderModels();document.getElementById('model-card').style.display='block';document.getElementById('start-row').style.display='none';}
+function renderModels(){const list=document.getElementById('model-list');list.innerHTML='';LIBRARY[S.type].models.filter(m=>m.level===S.level).forEach(m=>{const d=document.createElement('div');d.className='model-item';d.innerHTML=`<div class="title">${m.title}</div><div class="meta">${m.text.split(/\s+/).length} parole</div>`;d.onclick=()=>{S.model=m;document.querySelectorAll('.model-item').forEach(x=>x.classList.remove('selected'));d.classList.add('selected');document.getElementById('start-row').style.display='flex';};list.appendChild(d);});}
+function updateWordCount(){const t=document.getElementById('write-area').innerText.trim();const w=t?t.split(/\s+/).filter(x=>x).length:0;document.getElementById('wc-num').textContent=w;}
 
 // ===================== START =====================
-function startWithMic() {
-  state.micActive = true;
-  initMic().then(() => startActivity()).catch(() => {
-    state.micActive = false;
-    startActivity();
-  });
-}
-function startWithoutMic() {
-  state.micActive = false;
-  startActivity();
-}
-
-function startActivity() {
-  state.startTime = Date.now();
-  state.violations = [];
-  state.violationCount = 0;
-  state.answers = {};
-  state.checkValues = {};
-  state.clickTimestamps = [];
-  document.getElementById('badge-stack').innerHTML = '';
-  if (state.micActive) {
-    document.getElementById('noise-indicator').style.display = 'flex';
-  }
+async function startActivity(){
+  S.startTime=Date.now();S.violations=[];S.violationCount=0;S.answers={};S.focusAnswers={};S.checkValues={};S.clickTimestamps=[];S.sentencesLost=0;S.noiseFadeState=0;
+  document.getElementById('badge-list').innerHTML='<div class="empty-msg" id="badges-empty">Nessuna segnalazione</div>';
+  document.getElementById('sentences-lost').style.display='none';
+  document.getElementById('sidebar').classList.add('visible');
+  document.getElementById('main-wrap').classList.add('sidebar-open');
+  // Auto-init mic
+  try{await initMic();}catch(e){console.warn('Mic not available',e);}
+  // Session timer
+  clearInterval(S.sessionInterval);
+  S.sessionInterval=setInterval(()=>{const el=Math.floor((Date.now()-S.startTime)/1000);document.getElementById('session-timer').textContent=`${String(Math.floor(el/60)).padStart(2,'0')}:${String(el%60).padStart(2,'0')}`;},1000);
   goPhase('osserva');
 }
 
 // ===================== PHASES =====================
-function goPhase(phase) {
-  // Behavioral check: compulsive clicks
-  registerClick();
+const PH=['osserva','analizza','scrivi','confronta'],PL=['Osserva','Analizza','Scrivi','Confronta'];
+const PI=['<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>','<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>','<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>','<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>'];
 
-  state.phase = phase;
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + phase).classList.add('active');
-
-  // Update phase bars
-  const phases = ['osserva','analizza','scrivi','confronta'];
-  document.querySelectorAll('[id^=phasebar]').forEach(bar => {
-    bar.innerHTML = phases.map((p,i) => {
-      const idx = phases.indexOf(phase);
-      let cls = i < idx ? 'done' : i === idx ? 'active' : '';
-      const labels = ['Osserva','Analizza','Scrivi','Confronta'];
-      const icons = [
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>'
-      ];
-      return `<div class="phase-dot ${cls}">${icons[i]}<span>${labels[i]}</span></div>`;
-    }).join('');
-  });
-
-  if (phase === 'osserva') setupOsserva();
-  if (phase === 'analizza') setupAnalizza();
-  if (phase === 'scrivi') setupScrivi();
-  if (phase === 'confronta') setupConfronta();
+function goPhase(p){
+  registerClick();S.phase=p;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+p).classList.add('active');
+  const ci=PH.indexOf(p);
+  document.querySelectorAll('[id^=phasebar]').forEach(bar=>{bar.innerHTML=PH.map((x,i)=>`<div class="phase-dot ${i<ci?'done':i===ci?'active':''}">${PI[i]}<span>${PL[i]}</span></div>`).join('');});
+  document.getElementById('session-timer-sub').textContent=PL[ci];
+  document.getElementById('sb-wordcount').style.display=(p==='scrivi'||p==='confronta')?'block':'none';
+  if(p==='osserva')setupOsserva();if(p==='analizza')setupAnalizza();if(p==='scrivi')setupScrivi();if(p==='confronta')setupConfronta();
 }
 
-function setupOsserva() {
-  const m = state.model;
-  document.getElementById('obs-text').innerHTML = m.text.replace(/\n/g,'<br>') +
-    `<span class="author">${m.title} — Testo modello ${LIBRARY[state.type].label}</span>`;
-
-  state.obsMinTime = state.level === 'primaria' ? 180 : 300; // 3 or 5 min
-  state.obsElapsed = 0;
-  const btn = document.getElementById('btn-to-analizza');
-  btn.disabled = true;
-
-  clearInterval(state.obsTimerInterval);
-  state.obsTimerInterval = setInterval(() => {
-    state.obsElapsed++;
-    const remaining = Math.max(0, state.obsMinTime - state.obsElapsed);
-    const min = Math.floor(remaining / 60);
-    const sec = remaining % 60;
-    document.getElementById('obs-timer').textContent =
-      remaining > 0 ? `${min}:${String(sec).padStart(2,'0')}` : 'Puoi proseguire';
-    if (remaining <= 0) {
-      btn.disabled = false;
-      clearInterval(state.obsTimerInterval);
-    }
-  }, 1000);
+function setupOsserva(){
+  document.getElementById('obs-text').innerHTML=S.model.text.replace(/\n/g,'<br>')+`<span class="author">${S.model.title} \u2014 ${LIBRARY[S.type].label}</span>`;
+  S.obsMinTime=S.level==='primaria'?180:300;S.obsElapsed=0;
+  const btn=document.getElementById('btn-to-analizza');btn.disabled=true;
+  clearInterval(S.obsInterval);
+  S.obsInterval=setInterval(()=>{S.obsElapsed++;const r=Math.max(0,S.obsMinTime-S.obsElapsed);document.getElementById('obs-timer').textContent=r>0?`${Math.floor(r/60)}:${String(r%60).padStart(2,'0')}`:'Puoi proseguire';if(r<=0){btn.disabled=false;clearInterval(S.obsInterval);}},1000);
 }
-
-function setupAnalizza() {
-  clearInterval(state.obsTimerInterval);
-  const m = state.model;
-  document.getElementById('ana-ref').innerHTML = m.text.replace(/\n/g,'<br>');
-  const qDiv = document.getElementById('ana-questions');
-  qDiv.innerHTML = '';
-  m.questions.forEach((q, i) => {
-    const block = document.createElement('div');
-    block.className = 'question-block';
-    block.innerHTML = `<label><span class="num">${i+1}</span>${q}</label>
-      <textarea id="ans-${i}" placeholder="Scrivi la tua risposta...">${state.answers[i]||''}</textarea>`;
-    block.querySelector('textarea').addEventListener('input', e => {
-      state.answers[i] = e.target.value;
-    });
-    qDiv.appendChild(block);
-  });
+function setupAnalizza(){
+  clearInterval(S.obsInterval);
+  document.getElementById('ana-ref').innerHTML=S.model.text.replace(/\n/g,'<br>');
+  const qDiv=document.getElementById('ana-questions');qDiv.innerHTML='';
+  S.model.questions.forEach((q,i)=>{const b=document.createElement('div');b.className='question-block';b.innerHTML=`<label><span class="num">${i+1}</span>${q}</label><textarea id="ans-${i}" placeholder="Scrivi...">${S.answers[i]||''}</textarea>`;b.querySelector('textarea').oninput=e=>{S.answers[i]=e.target.value;};qDiv.appendChild(b);});
+  const fg=document.getElementById('focus-grid');fg.innerHTML='';
+  LIBRARY[S.type].focusQuestions.forEach((fq,i)=>{const d=document.createElement('div');d.className='focus-item';d.innerHTML=`<label>${fq.label}</label><textarea placeholder="${fq.q}">${S.focusAnswers[i]||''}</textarea>`;d.querySelector('textarea').oninput=e=>{S.focusAnswers[i]=e.target.value;};fg.appendChild(d);});
 }
-
-function setupScrivi() {
-  const m = state.model;
-  document.getElementById('write-ref').innerHTML = m.text.replace(/\n/g,'<br>');
-  const area = document.getElementById('write-area');
-  area.addEventListener('input', () => {
-    const words = area.value.trim().split(/\s+/).filter(w=>w).length;
-    document.getElementById('wc').textContent = words;
-  });
-
-  if (!state.writeStartTime) state.writeStartTime = Date.now();
-  clearInterval(state.writeTimerInterval);
-  state.writeTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - state.writeStartTime) / 1000);
-    const min = Math.floor(elapsed / 60);
-    const sec = elapsed % 60;
-    document.getElementById('write-timer').textContent = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-  }, 1000);
+function setupScrivi(){document.getElementById('write-ref').innerHTML=S.model.text.replace(/\n/g,'<br>');updateWordCount();}
+function setupConfronta(){
+  document.getElementById('conf-ref').innerHTML=S.model.text.replace(/\n/g,'<br>');
+  document.getElementById('conf-mine').textContent=document.getElementById('write-area').innerText||'(Nessun testo)';
+  const cl=document.getElementById('checklist');cl.innerHTML='';const lvs=['In parte','Abbastanza','Pienamente'];let idx=0;
+  LIBRARY[S.type].checklist.forEach(grp=>{const gd=document.createElement('div');gd.className='check-group';gd.innerHTML=`<div class="check-group-title">${grp.group}</div>`;grp.items.forEach(item=>{const ci=idx++;const d=document.createElement('div');d.className='check-item';d.innerHTML=`<div class="label-text">${item}</div><div class="check-levels">${lvs.map((l,li)=>`<button class="check-level ${S.checkValues[ci]===li?'sel-'+(li+1):''}" onclick="setCheck(${ci},${li},this)">${l}</button>`).join('')}</div>`;gd.appendChild(d);});cl.appendChild(gd);});
 }
-
-function setupConfronta() {
-  clearInterval(state.writeTimerInterval);
-  const m = state.model;
-  document.getElementById('conf-ref').innerHTML = m.text.replace(/\n/g,'<br>');
-  document.getElementById('conf-mine').textContent = document.getElementById('write-area').value || '(Nessun testo scritto)';
-
-  const cl = document.getElementById('checklist');
-  cl.innerHTML = '';
-  const items = LIBRARY[state.type].checklist;
-  const levels = ['In parte','Abbastanza','Pienamente'];
-  items.forEach((item, i) => {
-    const div = document.createElement('div');
-    div.className = 'check-item';
-    div.innerHTML = `<div class="label-text">${item}</div>
-      <div class="check-levels">${levels.map((l,li) =>
-        `<button class="check-level ${state.checkValues[i]===li?'sel-'+(li+1):''}" onclick="setCheck(${i},${li},this)">${l}</button>`
-      ).join('')}</div>`;
-    cl.appendChild(div);
-  });
-}
-
-function setCheck(idx, level, btn) {
-  state.checkValues[idx] = level;
-  const parent = btn.parentElement;
-  parent.querySelectorAll('.check-level').forEach((b,i) => {
-    b.className = 'check-level' + (i === level ? ' sel-'+(level+1) : '');
-  });
-}
+function setCheck(ci,lv,btn){S.checkValues[ci]=lv;btn.parentElement.querySelectorAll('.check-level').forEach((b,i)=>{b.className='check-level'+(i===lv?' sel-'+(lv+1):'');});}
 
 // ===================== NOISE METER =====================
-let audioCtx, analyser, micStream, noiseRAF;
-
-async function initMic() {
-  micStream = await navigator.mediaDevices.getUserMedia({audio:true});
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioCtx,analyser,micStream;
+async function initMic(){
+  micStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
   await audioCtx.resume();
-  const src = audioCtx.createMediaStreamSource(micStream);
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 512;
-  analyser.smoothingTimeConstant = 0.8;
-  src.connect(analyser);
-  readNoise();
+  const src=audioCtx.createMediaStreamSource(micStream);
+  analyser=audioCtx.createAnalyser();analyser.fftSize=512;analyser.smoothingTimeConstant=.8;
+  src.connect(analyser);readNoise();
+}
+function readNoise(){
+  if(!analyser)return;
+  const data=new Uint8Array(analyser.frequencyBinCount);analyser.getByteFrequencyData(data);
+  const avg=data.reduce((a,b)=>a+b,0)/data.length;
+  const pct=Math.min(100,avg/1.2);
+  // Histogram bars from real frequency data
+  const bars=document.querySelectorAll('.noise-bar');
+  const step=Math.floor(data.length/bars.length);
+  bars.forEach((b,i)=>{
+    const val=data[i*step]/2.55; // 0-100
+    b.style.height=Math.max(3,val)+'%';
+    b.style.background=val<50?'var(--green)':val<75?'var(--amber)':'var(--red)';
+  });
+  // Text
+  const pctEl=document.getElementById('noise-pct'),stEl=document.getElementById('noise-status'),silEl=document.getElementById('noise-silenzio');
+  pctEl.textContent=Math.round(pct)+'%';
+  if(pct<50){pctEl.style.color='var(--green)';stEl.textContent='Silenzio';stEl.style.background='var(--green-light)';stEl.style.color='var(--green)';silEl.style.display='none';}
+  else if(pct<75){pctEl.style.color='var(--amber)';stEl.textContent='Attenzione';stEl.style.background='var(--amber-light)';stEl.style.color='#8B6914';silEl.style.display='none';}
+  else if(pct<90){pctEl.style.color='var(--red)';stEl.textContent='Troppo!';stEl.style.background='var(--red-light)';stEl.style.color='var(--red)';silEl.style.display='block';}
+  else{pctEl.style.color='var(--red)';stEl.textContent='PERICOLO';stEl.style.background='var(--red)';stEl.style.color='#fff';silEl.style.display='block';silEl.style.background='var(--red-light)';silEl.style.borderColor='var(--red)';silEl.style.color='var(--red)';}
+  // History
+  S.noiseHistory.push(pct);if(S.noiseHistory.length>600)S.noiseHistory.shift();
+  S.avgNoise=Math.round(S.noiseHistory.reduce((a,b)=>a+b,0)/S.noiseHistory.length);
+  document.getElementById('noise-avg').textContent=`Media: ${S.avgNoise}%`;
+  // TEXT FADING MECHANIC (only in scrivi phase)
+  handleNoisePenalty(pct);
+  requestAnimationFrame(readNoise);
 }
 
-function readNoise() {
-  if (!analyser) return;
-  const data = new Uint8Array(analyser.frequencyBinCount);
-  analyser.getByteFrequencyData(data);
-  const avg = data.reduce((a,b)=>a+b,0) / data.length;
-  const pct = Math.min(100, avg / 1.2);
+// ===================== NOISE → TEXT FADING =====================
+const NOISE_THRESHOLD=90; // % above which penalty triggers
+const FADE_WARN_MS=3000;  // 3s: sentence starts fading
+const FADE_DELETE_MS=6000; // 6s total: sentence deleted
 
-  // Update UI
-  const fill = document.getElementById('noisefill');
-  fill.style.width = pct + '%';
-  const dot = document.getElementById('noise-dot');
-  const dbEl = document.getElementById('noise-db');
-
-  if (pct < 33) {
-    fill.style.background = 'var(--green)';
-    dot.style.background = 'var(--green)';
-    dbEl.style.color = 'var(--green)';
-  } else if (pct < 66) {
-    fill.style.background = 'var(--amber)';
-    dot.style.background = 'var(--amber)';
-    dbEl.style.color = 'var(--amber)';
-  } else {
-    fill.style.background = 'var(--red)';
-    dot.style.background = 'var(--red)';
-    dbEl.style.color = 'var(--red)';
+function handleNoisePenalty(pct){
+  const penalty=document.getElementById('noise-penalty');
+  if(S.phase!=='scrivi'){
+    // Reset state when not writing
+    if(S.noiseFadeState!==0)resetFade();
+    penalty.style.display='none';
+    return;
   }
-  dbEl.textContent = Math.round(pct) + '%';
+  const area=document.getElementById('write-area');
+  const text=area.innerText.trim();
+  if(!text){penalty.style.display='none';return;}
 
-  // Track noise history
-  state.noiseHistory.push(pct);
-  if (state.noiseHistory.length > 600) state.noiseHistory.shift();
-  state.avgNoise = Math.round(state.noiseHistory.reduce((a,b)=>a+b,0)/state.noiseHistory.length);
+  if(pct>NOISE_THRESHOLD){
+    if(!S.noiseHighStart)S.noiseHighStart=Date.now();
+    const elapsed=Date.now()-S.noiseHighStart;
 
-  // Warning overlay if loud for 10+ seconds
-  if (pct > 66) {
-    if (!state.noiseExceedStart) state.noiseExceedStart = Date.now();
-    if (Date.now() - state.noiseExceedStart > 10000) {
-      document.getElementById('noise-warning').style.display = 'flex';
+    if(elapsed>=FADE_WARN_MS && S.noiseFadeState===0){
+      // Start fading last sentence
+      S.noiseFadeState=1;
+      applyFade(area);
+      penalty.style.display='block';
+    }
+    if(elapsed>=FADE_DELETE_MS && S.noiseFadeState===1){
+      // Delete last sentence
+      S.noiseFadeState=2;
+      deleteLastSentence(area);
+      S.sentencesLost++;
+      updateSentencesLostUI();
+      addBadge('empty','Frase cancellata dal rumore',true);
+      // Reset for next cycle
+      setTimeout(()=>{S.noiseFadeState=0;S.noiseHighStart=Date.now();penalty.style.display='none';},1500);
     }
   } else {
-    state.noiseExceedStart = null;
-    document.getElementById('noise-warning').style.display = 'none';
+    // Silence returned
+    if(S.noiseFadeState===1){
+      // Recover: remove fade
+      removeFade(area);
+      penalty.style.display='none';
+    }
+    S.noiseHighStart=null;
+    S.noiseFadeState=0;
   }
-
-  noiseRAF = requestAnimationFrame(readNoise);
 }
 
-function toggleMic() {
-  if (audioCtx && audioCtx.state === 'running') {
-    audioCtx.suspend();
-    cancelAnimationFrame(noiseRAF);
-    document.getElementById('noise-db').textContent = 'OFF';
-  } else if (audioCtx) {
-    audioCtx.resume();
-    readNoise();
+function getLastSentenceBoundary(text){
+  // Find last sentence: split by .!?\n and find the start of the last one
+  const trimmed=text.replace(/\s+$/,'');
+  // Look for the last sentence-ending punctuation before the end
+  let lastEnd=-1;
+  for(let i=trimmed.length-2;i>=0;i--){
+    if('.!?\n'.includes(trimmed[i])){lastEnd=i;break;}
   }
+  return lastEnd+1; // start of last sentence
+}
+
+function applyFade(area){
+  const text=area.innerText;
+  const boundary=getLastSentenceBoundary(text);
+  const before=text.substring(0,boundary);
+  const lastSentence=text.substring(boundary);
+  if(!lastSentence.trim())return;
+  area.innerHTML=escHtml(before)+`<span class="fading-sentence">${escHtml(lastSentence)}</span>`;
+  // Move cursor to end
+  placeCursorEnd(area);
+}
+
+function removeFade(area){
+  // Restore plain text
+  const text=area.innerText;
+  area.textContent=text;
+  placeCursorEnd(area);
+}
+
+function deleteLastSentence(area){
+  const text=area.innerText;
+  const boundary=getLastSentenceBoundary(text);
+  const before=text.substring(0,boundary).replace(/\s+$/,'');
+  area.textContent=before;
+  placeCursorEnd(area);
+  updateWordCount();
+}
+
+function resetFade(){S.noiseFadeState=0;S.noiseHighStart=null;}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function placeCursorEnd(el){
+  const range=document.createRange();const sel=window.getSelection();
+  range.selectNodeContents(el);range.collapse(false);sel.removeAllRanges();sel.addRange(range);
+}
+
+function updateSentencesLostUI(){
+  const el=document.getElementById('sentences-lost');
+  el.style.display='block';
+  el.textContent=`${S.sentencesLost} fras${S.sentencesLost===1?'e':'i'} pers${S.sentencesLost===1?'a':'e'} per rumore`;
 }
 
 // ===================== BEHAVIORAL MONITORING =====================
-const BADGE_SVG = {
-  skip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4l10 8-10 8V4z"/><line x1="19" y1="5" x2="19" y2="19"/></svg>`,
-  click: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>`,
-  fast: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  empty: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="9" y1="13" x2="15" y2="13"/></svg>`
-};
-
-function addBadge(type, label, severe) {
-  state.violationCount++;
-  state.violations.push({type, label, time: Date.now()});
-  const stack = document.getElementById('badge-stack');
-  const div = document.createElement('div');
-  div.className = 'badge-item' + (severe ? ' severe' : '');
-  div.innerHTML = `${BADGE_SVG[type]||BADGE_SVG.fast}<span>${label}</span>`;
-  stack.appendChild(div);
-
-  // Check violation threshold
-  if (state.violationCount >= 3) {
-    const totalTime = (Date.now() - state.startTime) / 60000;
-    if (totalTime < 15) {
-      showViolationOverlay();
-    }
-  }
-  if (state.violationCount >= 5) {
-    showViolationOverlay();
-  }
+const BADGE_SVG={skip:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4l10 8-10 8V4z"/><line x1="19" y1="5" x2="19" y2="19"/></svg>',click:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>',fast:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',empty:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="9" y1="13" x2="15" y2="13"/></svg>'};
+function addBadge(type,label,severe){
+  S.violationCount++;S.violations.push({type,label,time:Date.now()});
+  const el=document.getElementById('badges-empty');if(el)el.remove();
+  const d=document.createElement('div');d.className='badge-item'+(severe?' severe':'');d.innerHTML=`${BADGE_SVG[type]||BADGE_SVG.fast}<span>${label}</span>`;
+  document.getElementById('badge-list').appendChild(d);
+  if(S.violationCount>=3&&(Date.now()-S.startTime)/60000<15)showViolation();
+  if(S.violationCount>=5)showViolation();
 }
-
-function showViolationOverlay() {
-  document.getElementById('violation-overlay').style.display = 'flex';
-}
-
-function tryUnlock() {
-  const pin = document.getElementById('unlock-pin').value;
-  if (pin === state.PIN) {
-    document.getElementById('violation-overlay').style.display = 'none';
-    state.violationCount = 0;
-    document.getElementById('badge-stack').innerHTML = '';
-    document.getElementById('unlock-pin').value = '';
-  }
-}
-
-function registerClick() {
-  const now = Date.now();
-  state.clickTimestamps.push(now);
-  state.clickTimestamps = state.clickTimestamps.filter(t => now - t < 5000);
-  if (state.clickTimestamps.length >= 8) {
-    addBadge('click', 'Clic compulsivi', false);
-    state.clickTimestamps = [];
-  }
-}
+function showViolation(){document.getElementById('violation-overlay').style.display='flex';}
+function tryUnlock(){if(document.getElementById('unlock-pin').value===S.PIN){document.getElementById('violation-overlay').style.display='none';S.violationCount=0;document.getElementById('badge-list').innerHTML='<div class="empty-msg" id="badges-empty">Reset</div>';document.getElementById('unlock-pin').value='';}}
+function registerClick(){const now=Date.now();S.clickTimestamps.push(now);S.clickTimestamps=S.clickTimestamps.filter(t=>now-t<5000);if(S.clickTimestamps.length>=8){addBadge('click','Clic compulsivi',false);S.clickTimestamps=[];}}
 
 // ===================== PDF EXPORT =====================
-function exportPDF() {
-  const {jsPDF} = window.jspdf;
-  const doc = new jsPDF('p','mm','a4');
-  const W = 210, H = 297;
-  const mg = 20;
-  let y = mg;
-
-  // Header
-  doc.setFillColor(27, 109, 63);
-  doc.rect(0, 0, W, 28, 'F');
-  doc.setTextColor(255);
-  doc.setFontSize(18);
-  doc.setFont('helvetica','bold');
-  doc.text('Bottega', mg, 18);
-  doc.setFontSize(9);
+function doExportPDF(){
+  const studentName=document.getElementById('pdf-name').value.trim()||'Studente';
+  const studentClass=document.getElementById('pdf-class').value.trim()||'';
+  document.getElementById('pdf-modal').style.display='none';
+  const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');const W=210,mg=20;let y=mg;
+  doc.setFillColor(27,109,63);doc.rect(0,0,W,26,'F');doc.setTextColor(255);doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text('Bottega',mg,16);doc.setFontSize(8);doc.setFont('helvetica','normal');doc.text('Scrivi come un artigiano',mg+45,16);doc.text(new Date().toLocaleDateString('it-IT'),W-mg,16,{align:'right'});
+  y=34;doc.setTextColor(30);doc.setFontSize(9);doc.setFont('helvetica','bold');
+  doc.text(`${studentName}${studentClass?' \u2014 Classe '+studentClass:''}`,mg,y);
   doc.setFont('helvetica','normal');
-  doc.text('Scrivi come un artigiano', mg + 55, 18);
-  doc.text(new Date().toLocaleDateString('it-IT'), W - mg, 18, {align:'right'});
-
-  y = 38;
-  doc.setTextColor(30);
-
-  // Model info
-  doc.setFontSize(10);
-  doc.setFont('helvetica','bold');
-  doc.text(`Tipologia: ${LIBRARY[state.type].label}`, mg, y);
-  doc.text(`Livello: ${state.level === 'primaria' ? 'Primaria' : 'Secondaria I grado'}`, mg + 80, y);
-  y += 6;
-  doc.text(`Testo modello: ${state.model.title}`, mg, y);
-  if (state.micActive) {
-    doc.text(`Rumore medio: ${state.avgNoise}%`, mg + 100, y);
-  }
-  y += 10;
-
-  // Model text
-  doc.setFillColor(232, 245, 238);
-  const modelLines = doc.splitTextToSize(state.model.text, W - 2*mg - 8);
-  const modelH = modelLines.length * 4.5 + 10;
-  doc.rect(mg, y, W - 2*mg, modelH, 'F');
-  doc.setDrawColor(27, 109, 63);
-  doc.setLineWidth(1);
-  doc.line(mg, y, mg, y + modelH);
-  y += 6;
-  doc.setFontSize(8);
-  doc.setFont('helvetica','normal');
-  doc.text(modelLines, mg + 5, y);
-  y += modelH + 4;
-
-  // Analysis answers
-  if (Object.keys(state.answers).length > 0) {
-    doc.setFontSize(10);
-    doc.setFont('helvetica','bold');
-    doc.text('Analisi del modello', mg, y);
-    y += 6;
-    doc.setFontSize(8);
-    doc.setFont('helvetica','normal');
-    state.model.questions.forEach((q, i) => {
-      if (y > H - 30) { doc.addPage(); y = mg; }
-      doc.setFont('helvetica','bold');
-      const qLines = doc.splitTextToSize(`${i+1}. ${q}`, W - 2*mg);
-      doc.text(qLines, mg, y);
-      y += qLines.length * 3.5 + 2;
-      doc.setFont('helvetica','normal');
-      const ans = state.answers[i] || '(nessuna risposta)';
-      const aLines = doc.splitTextToSize(ans, W - 2*mg - 5);
-      doc.text(aLines, mg + 3, y);
-      y += aLines.length * 3.5 + 4;
-    });
-  }
-
-  // PAGE 2: Student text + checklist
-  doc.addPage();
-  y = mg;
-
-  doc.setFillColor(27, 109, 63);
-  doc.rect(0, 0, W, 18, 'F');
-  doc.setTextColor(255);
-  doc.setFontSize(12);
-  doc.setFont('helvetica','bold');
-  doc.text('Il mio testo', mg, 13);
-  y = 26;
-  doc.setTextColor(30);
-
-  const studentText = document.getElementById('write-area').value || '(Nessun testo scritto)';
-  doc.setFontSize(9);
-  doc.setFont('helvetica','normal');
-  const stLines = doc.splitTextToSize(studentText, W - 2*mg);
-  doc.text(stLines, mg, y);
-  y += stLines.length * 4 + 10;
-
+  doc.text(`${LIBRARY[S.type].label} | ${S.level==='primaria'?'Primaria':'Secondaria'} | ${S.model.title}`,mg,y+5);
+  const meta=[];if(S.avgNoise)meta.push(`Rumore: ${S.avgNoise}%`);if(S.sentencesLost)meta.push(`Frasi perse: ${S.sentencesLost}`);
+  if(meta.length)doc.text(meta.join(' | '),W-mg,y,{align:'right'});
+  y+=14;
+  // Model
+  doc.setFillColor(232,245,238);const ml=doc.splitTextToSize(S.model.text,W-2*mg-6);const mh=ml.length*3.8+8;doc.rect(mg,y,W-2*mg,mh,'F');doc.setDrawColor(27,109,63);doc.setLineWidth(.8);doc.line(mg,y,mg,y+mh);doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.text(ml,mg+4,y+5);y+=mh+5;
+  // Analysis
+  if(Object.keys(S.answers).length){doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text('Analisi',mg,y);y+=5;doc.setFontSize(7.5);S.model.questions.forEach((q,i)=>{if(y>270){doc.addPage();y=mg;}doc.setFont('helvetica','bold');const ql=doc.splitTextToSize(`${i+1}. ${q}`,W-2*mg);doc.text(ql,mg,y);y+=ql.length*3.2+1;doc.setFont('helvetica','normal');const al=doc.splitTextToSize(S.answers[i]||'(vuoto)',W-2*mg-3);doc.text(al,mg+2,y);y+=al.length*3.2+3;});}
+  // Focus
+  if(Object.keys(S.focusAnswers).length){if(y>250){doc.addPage();y=mg;}y+=3;doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text('Focus linguistico',mg,y);y+=5;LIBRARY[S.type].focusQuestions.forEach((fq,i)=>{if(y>270){doc.addPage();y=mg;}doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.text(fq.label+':',mg,y);y+=3.2;doc.setFont('helvetica','normal');const fl=doc.splitTextToSize(S.focusAnswers[i]||'(vuoto)',W-2*mg-3);doc.text(fl,mg+2,y);y+=fl.length*3.2+3;});}
+  // Page 2
+  doc.addPage();y=mg;doc.setFillColor(27,109,63);doc.rect(0,0,W,16,'F');doc.setTextColor(255);doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text(`Il testo di ${studentName}`,mg,11);if(studentClass)doc.text(`Classe ${studentClass}`,W-mg,11,{align:'right'});y=22;doc.setTextColor(30);
+  const st=document.getElementById('write-area').innerText||'(vuoto)';doc.setFontSize(8.5);doc.setFont('helvetica','normal');const sl=doc.splitTextToSize(st,W-2*mg);doc.text(sl,mg,y);y+=sl.length*3.8+8;
   // Checklist
-  if (y > H - 60) { doc.addPage(); y = mg; }
-  doc.setFontSize(10);
-  doc.setFont('helvetica','bold');
-  doc.text('Autovalutazione', mg, y);
-  y += 7;
-  const levels = ['In parte','Abbastanza','Pienamente'];
-  LIBRARY[state.type].checklist.forEach((item, i) => {
-    if (y > H - 20) { doc.addPage(); y = mg; }
-    const val = state.checkValues[i];
-    const levelTxt = val !== undefined ? levels[val] : '(non valutato)';
-    doc.setFontSize(8);
-    doc.setFont('helvetica','normal');
-    const itemLines = doc.splitTextToSize(`• ${item}`, W - 2*mg - 45);
-    doc.text(itemLines, mg, y);
-    // Level indicator
-    doc.setFont('helvetica','bold');
-    if (val !== undefined) {
-      const colors = [[212,160,23],[27,109,63],[27,109,63]];
-      doc.setTextColor(...colors[val]);
-    }
-    doc.text(levelTxt, W - mg, y, {align:'right'});
-    doc.setTextColor(30);
-    y += itemLines.length * 3.5 + 4;
-  });
-
-  // Metadata footer
-  y += 6;
-  doc.setFontSize(7);
-  doc.setTextColor(136);
-  const totalMin = Math.round((Date.now() - state.startTime) / 60000);
-  doc.text(`Tempo totale: ${totalMin} min | Violazioni: ${state.violations.length} | Generato con Bottega — SacraFamiglia education`, mg, y);
-
-  doc.save(`Bottega_${state.model.title.replace(/\s+/g,'_')}.pdf`);
+  if(y>250){doc.addPage();y=mg;}doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text('Autovalutazione',mg,y);y+=6;const lvs=['In parte','Abbastanza','Pienamente'];let ci2=0;
+  LIBRARY[S.type].checklist.forEach(grp=>{if(y>265){doc.addPage();y=mg;}doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(27,109,63);doc.text(grp.group,mg,y);y+=4;doc.setTextColor(30);grp.items.forEach(item=>{if(y>275){doc.addPage();y=mg;}const idx=ci2++;const v=S.checkValues[idx];doc.setFontSize(7.5);doc.setFont('helvetica','normal');const il=doc.splitTextToSize('\u2022 '+item,W-2*mg-40);doc.text(il,mg,y);doc.setFont('helvetica','bold');if(v!==undefined){doc.setTextColor(...(v===0?[180,140,20]:[27,109,63]));}doc.text(v!==undefined?lvs[v]:'--',W-mg,y,{align:'right'});doc.setTextColor(30);y+=il.length*3.2+2;});y+=2;});
+  y+=4;doc.setFontSize(6.5);doc.setTextColor(136);doc.text(`Tempo: ${Math.round((Date.now()-S.startTime)/60000)} min | Violazioni: ${S.violations.length} | Frasi perse: ${S.sentencesLost} | Bottega \u2014 SacraFamiglia education`,mg,y);
+  doc.save(`Bottega_${studentName.replace(/\s+/g,'_')}${studentClass?'_'+studentClass:''}_${S.model.title.replace(/\s+/g,'_')}.pdf`);
 }
 
 // ===================== BOOT =====================
